@@ -18,11 +18,11 @@ public class Load3DSoundsInUI : MonoBehaviour {
     
     void Awake()
     {
-        LoadAllSoundsFromResources();
+        SetIconsfromSoundResources();
     }
 
 
-    void LoadAllSoundsFromResources()
+    void SetIconsfromSoundResources()
     {
         int row = 0;
 
@@ -74,21 +74,14 @@ public class Load3DSoundsInUI : MonoBehaviour {
 
     public void DragIconObjToScene(GameObject obj)
     {
-        //Debug.Log("Drag Icon Object");
-
         //On Drag Object
         GameObject.Find(obj.name + "bis").transform.position = Input.mousePosition;
 
-
+        //If Mouse cursor is within the mainGraphicPanel
         if (mainGraphicPanel.GetComponent<RectTransform>().rect.Contains(GameObject.Find(obj.name + "bis").transform.position))
         {
-            //Debug.Log("Icon Dragged in Main Graphic Panel");
-
-            //Projection from Screen to Ortho camera - p return a coordinates float values for x and y between 0 and 1
-            /*Vector2 p = GameObject.Find("Main Camera").GetComponent<Camera>().ScreenToViewportPoint(new Vector3(
-                                                                                                   Input.mousePosition.x,
-                                                                                                   Input.mousePosition.y,
-                                                                                                   Input.mousePosition.z));*/
+            //Set Sphere as Active
+            Sphere.SetActive(true);
 
             //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
             //Debug.Log("x " + (mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x/Screen.width) * (Input.mousePosition.x - mainGraphicPanel.GetComponent<RectTransform>().position.x) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x);
@@ -106,21 +99,30 @@ public class Load3DSoundsInUI : MonoBehaviour {
 
             RaycastHit hit;
             if (Physics.Raycast(rayPerspective, out hit, 100))
-                 Sphere.transform.position = rayPerspective.origin + rayPerspective.direction * hit.distance/2;
+                Sphere.transform.position = rayPerspective.origin + rayPerspective.direction * hit.distance / 2;
 
         }
-
         
+        // the mouse cursor is located outside the mainGraphicPanel
+        else
+        { 
+            //Set Sphere as Inactive
+            Sphere.SetActive(false);
+        }
     }
 
     public void OnDownObj(GameObject obj)
     {
-        //Debug.Log("Down Icon Object");
-
         //Duplicate the Icon Object
         GameObject go = Instantiate<GameObject>(obj);
+
+        //Rename Object
         go.name = obj.name + "bis";
         go.transform.SetParent(obj.transform.parent);
+
+        //Set As Active
+        go.SetActive(true);
+
         //Set degree of transparency
         go.GetComponent<RawImage>().color = new Color(go.GetComponent<RawImage>().color.r, go.GetComponent<RawImage>().color.g, go.GetComponent<RawImage>().color.b, 0.25f);
 
@@ -129,11 +131,14 @@ public class Load3DSoundsInUI : MonoBehaviour {
         Sphere.name = "Sphere" + obj.name;
     }
 
+
     public void OnUpObj(GameObject obj)
     {
-        //Debug.Log("Up Icon Object");
-
         //Delete the Icon Obj
         Destroy(GameObject.Find(obj.name + "bis"));
+
+       
+            
+
     }
 }
