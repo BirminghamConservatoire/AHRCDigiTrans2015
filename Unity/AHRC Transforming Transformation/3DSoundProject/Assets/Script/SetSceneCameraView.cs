@@ -24,7 +24,7 @@ public class SetSceneCameraView : MonoBehaviour {
 	void LateUpdate () {
 
         //Set the Nearclip of the Scene Camera to the edge of the floor object
-        mySceneCamera.nearClipPlane = -1.0f * (transform.localPosition.z + (GameObject.Find("Floor").transform.localScale.z * 10 / 2));
+        mySceneCamera.nearClipPlane = Mathf.Abs (transform.localPosition.z + (GameObject.Find("Floor").transform.localScale.z * 10 / 2));
 
         //Set the Field of View angle of the Scen Camera
         //mySceneCamera.fieldOfView = Mathf.Atan((GameObject.Find("Floor").transform.localScale.x * 10 / 2) / mySceneCamera.nearClipPlane) * Mathf.Rad2Deg;
