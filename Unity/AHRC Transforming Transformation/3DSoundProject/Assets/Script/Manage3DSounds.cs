@@ -12,6 +12,7 @@ public class Manage3DSounds : MonoBehaviour
     private AudioClip[] myAudioClips;
 
     public GameObject mainGraphicPanel;
+
     public GameObject RecycleBin;
 
     public GameObject MusicObj;
@@ -25,13 +26,6 @@ public class Manage3DSounds : MonoBehaviour
         SetIconsfromSoundResources();
     }
 
-    void FixedUpdate()
-    {
-        if (RecycleBin.GetComponent<RectTransform>().rect.Contains(Input.mousePosition))
-        {
-            Debug.Log("Mouse on bin");
-        }
-    }
 
     //Update has a lower priority order than Other event - see docs.unity3d.com/Manual/ExecutionOrder.html
     /*void LateUpdate()
@@ -100,11 +94,8 @@ public class Manage3DSounds : MonoBehaviour
         }
     }
 
-   
-
-
     //Set State of collider of Musical Objects
-   void SetAllColliderState(bool state)
+    void SetAllColliderState(bool state)
     {
         for (int i = 0; i < MusicObj.transform.childCount; i++)
             MusicObj.transform.GetChild(i).GetComponent<Collider>().enabled = state;
@@ -127,6 +118,9 @@ public class Manage3DSounds : MonoBehaviour
 
         //Offset the distance so that the sphere is always appearing inside the room
         obj.transform.position = ray.origin + ray.direction * (hit.distance - offset);
+
+        obj.transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y,
+                                             obj.transform.position.z);
 
         //Set Front limit to the workspace
         if (obj.transform.position.z < GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2)
