@@ -3,3 +3,18 @@ Repository for code and resources for AHRC DigiTrans project http://gtr.rcuk.ac.
 
 See LICENSE for licensing details...
 
+# Requirements
+
+Unity 5 or higher
+Mac OS X 10.10 or Windows 8 or higher
+
+# Project Setup
+
+This project requires 3Dception, which can be downloaded from http://twobigears.com
+
+Be sure to choose the "non-commercial" license.
+
+Once downloaded, follow the instructions on "Importing 3Dception" or "Updating 3Dception" in the 3DCeptionUnity User Guide
+
+
+
