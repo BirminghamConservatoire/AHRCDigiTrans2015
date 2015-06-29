@@ -52,7 +52,7 @@ public class Manage3DSounds : MonoBehaviour
 
                 //Project the Dragged Icomn on the screen 
                 Vector3 posViewport = GameObject.Find("Scene Camera").GetComponent<Camera>().WorldToViewportPoint(Sphere.transform.position);
-                Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.y / Screen.height, 0.0f));
+                Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y , 0.0f));
                 DraggedIcon.transform.position = posScreen;
             }
 
