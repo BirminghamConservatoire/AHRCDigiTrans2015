@@ -134,9 +134,6 @@ public class Manage3DSounds : MonoBehaviour
             MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
     }
 
-    
-
-
     void ControlSoundObj(GameObject obj)
     {
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
@@ -147,12 +144,20 @@ public class Manage3DSounds : MonoBehaviour
         p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
 
         //Projection from Ortho Camera (Viewport) to Perspective Camera
-        Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
+        //Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
+        //For Kinect Manipulation we project from an orthoCamera 
+        Ray rayPerspective = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
         Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.red);
 
         //For Kinect
         distance += Input.GetAxis("Mouse ScrollWheel");
-        Vector3 vec = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
+
+        //Clamp Distance
+        distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2);
+
+        //Vector3 vec = GameObject.Find("SceneCamera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
+        //For Kinect Manipulation we project from an orthoCamera 
+        Vector3 vec = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
 
         //Clamp vec position
         vec = new Vector3(Mathf.Clamp(vec.x, GameObject.Find("Left").transform.position.x + obj.transform.lossyScale.x / 2, GameObject.Find("Right").transform.position.x - obj.transform.lossyScale.x / 2),
