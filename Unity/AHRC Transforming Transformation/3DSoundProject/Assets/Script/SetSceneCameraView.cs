@@ -32,13 +32,26 @@ public class SetSceneCameraView : MonoBehaviour {
         //Set Matrix Parameters
         left = -1 * (GameObject.Find("Floor").transform.localScale.x * 10 / 2);
         right = GameObject.Find("Floor").transform.localScale.x * 10 / 2;
-        bottom = -1 * (GameObject.Find("Back").transform.localScale.z * 10 / 2);
-        top = GameObject.Find("Back").transform.localScale.z * 10 / 2;  
+        bottom = -1 * (GameObject.Find("Front").transform.localScale.z * 10 / 2);
+        top = GameObject.Find("Front").transform.localScale.z * 10 / 2;
 
-        //Set the frustum on th Near Clip plane of the scene camera to the edge of the Interaction Volume - We just readjust the matrix
-         Matrix4x4 m  = RefineProjectionMatrix(left, right, bottom, top, mySceneCamera.nearClipPlane, mySceneCamera.farClipPlane);
-         mySceneCamera.projectionMatrix = m;
+        if (!GetComponent<Camera>().orthographic)
+        {
+            //Set the frustum on th Near Clip plane of the scene camera to the edge of the Interaction Volume - We just readjust the matrix
+            Matrix4x4 m = RefineProjectionMatrix(left, right, bottom, top, mySceneCamera.nearClipPlane, mySceneCamera.farClipPlane);
+            mySceneCamera.projectionMatrix = m;
+        }
+        else 
+        {
+            //Creates an orthogonal projection matrix.
+            //static Matrix4x4 Ortho(float left, float right, float bottom, float top, float zNear, float zFar); 
+            Matrix4x4 m = Matrix4x4.Ortho(left, right, bottom, top, mySceneCamera.nearClipPlane, mySceneCamera.farClipPlane);
+
+            //Assign the orthogonal matrix to Camera
+            GetComponent<Camera>().projectionMatrix = m;
+        }
 	}
+
 
     static Matrix4x4 RefineProjectionMatrix(float left, float right, float bottom, float top, float near, float far)
     {

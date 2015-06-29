@@ -22,13 +22,13 @@ public class Manage3DSounds : MonoBehaviour
     private GameObject DraggedIcon = null;
     private GameObject DraggedObj = null;
 
-    private float objDepth = 0.0f;
 
     void Awake()
     {
         SetIconsfromSoundResources();
     }
 
+    private float distance = 0.0f;
 
     void FixedUpdate()
     {
@@ -44,27 +44,16 @@ public class Manage3DSounds : MonoBehaviour
                 //Set Sphere as Active
                 Sphere.SetActive(true);
 
-                //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
-                Vector2 p = new Vector2((mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - mainGraphicPanel.GetComponent<RectTransform>().position.x) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x,
-                                        (mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.y / Screen.height) * (Input.mousePosition.y - mainGraphicPanel.GetComponent<RectTransform>().position.y) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.y);
-                //Clamp the value of p
-                p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
-                p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
-
-
-                //Projection from Ortho Camera (Viewport) to Perspective Camera
-                Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
-                //Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.green);
-
-                RaycastHit hit;
-                if (Physics.Raycast(rayPerspective, out hit, 100))
-                {
-                    if(hit.collider.gameObject.layer == 9)
-                        ControlSoundObj(Sphere, rayPerspective, hit);
-                }
+                //For Kinect2.0
+                ControlSoundObj(Sphere);
 
                 //Set Icon size as a function of the position in depth of the Sphere
                 DraggedIcon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, Sphere.transform.position));
+
+                //Project the Dragged Icomn on the screen 
+                Vector3 posViewport = GameObject.Find("Scene Camera").GetComponent<Camera>().WorldToViewportPoint(Sphere.transform.position);
+                Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.y / Screen.height, 0.0f));
+                DraggedIcon.transform.position = posScreen;
             }
 
             // the mouse cursor is located outside the mainGraphicPanel
@@ -79,24 +68,8 @@ public class Manage3DSounds : MonoBehaviour
         //If we have selected an object and we dragged it through th eenvironment
         if (DraggedObj)
         {
-            //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
-            Vector2 p = new Vector2((GameObject.Find("ViewRenderTexture").transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - GameObject.Find("ViewRenderTexture").GetComponent<RectTransform>().position.x) / GameObject.Find("ViewRenderTexture").GetComponent<RectTransform>().sizeDelta.x,
-                                    (GameObject.Find("ViewRenderTexture").transform.parent.GetComponent<RectTransform>().sizeDelta.y / Screen.height) * (Input.mousePosition.y - GameObject.Find("ViewRenderTexture").GetComponent<RectTransform>().position.y) / GameObject.Find("ViewRenderTexture").GetComponent<RectTransform>().sizeDelta.y);
-            //Clamp the value of p
-            p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
-            p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
-
-
-            //Projection from Ortho Camera (Viewport) to Perspective Camera
-            Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
-            //Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.red);
-
-            RaycastHit hit;
-            if (Physics.Raycast(rayPerspective, out hit, 100))
-            {
-                if (hit.collider.gameObject.layer == 9)
-                    ControlSoundObj(DraggedObj, rayPerspective, hit);
-            }
+            //For Kinect 2.0
+            ControlSoundObj(DraggedObj);
         }
     }
 
@@ -161,55 +134,40 @@ public class Manage3DSounds : MonoBehaviour
             MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
     }
 
-    void ControlSoundObj(GameObject obj, Ray ray, RaycastHit hit)
+    
+
+
+    void ControlSoundObj(GameObject obj)
     {
-        //Set up the logical position
-        obj.transform.position = ray.origin + ray.direction * (hit.distance);
+        //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
+        Vector2 p = new Vector2((mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - mainGraphicPanel.GetComponent<RectTransform>().position.x) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x,
+                                (mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.y / Screen.height) * (Input.mousePosition.y - mainGraphicPanel.GetComponent<RectTransform>().position.y) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.y);
+        //Clamp the value of p
+        p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
+        p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
 
-     
+        //Projection from Ortho Camera (Viewport) to Perspective Camera
+        Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
+        Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.red);
 
-        //Set Z position of manipulated object as a function of mouse scroll wheel
-        /*float DeltaObjDepth = Input.GetAxis("Mouse ScrollWheel");
-        objDepth += DeltaObjDepth;
+        //For Kinect
+        distance += Input.GetAxis("Mouse ScrollWheel");
+        Vector3 vec = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
 
-        //Just in case offset the distance
-        float offset = 0.0f;
+        //Clamp vec position
+        vec = new Vector3(Mathf.Clamp(vec.x, GameObject.Find("Left").transform.position.x + obj.transform.lossyScale.x / 2, GameObject.Find("Right").transform.position.x - obj.transform.lossyScale.x / 2),
+                          Mathf.Clamp(vec.y, GameObject.Find("Floor").transform.position.y + obj.transform.lossyScale.y / 2, GameObject.Find("Ceiling").transform.position.y - obj.transform.lossyScale.y / 2),
+                          Mathf.Clamp(vec.z, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2));
 
-        //Check the Distance between the center of the ball and the wall in contact
-        Ray myRay = new Ray(obj.transform.position, -hit.transform.up);
-        //Debug.DrawRay(myRay.origin, myRay.direction * 10, Color.blue);
-
-        //Set up the logical position
-        obj.transform.position = ray.origin + ray.direction * (hit.distance);
-
-        RaycastHit myHit;
-        if (Physics.Raycast(myRay, out myHit, obj.transform.lossyScale.x / 1.99f))//it used to be 2.0f but the positon was jaggy
-            offset = obj.transform.lossyScale.x / 2 / (Mathf.Cos(Vector3.Angle(-ray.direction, hit.transform.up) * Mathf.Deg2Rad));
-
-        //Offset the distance so that the sphere is always appearing inside the room
-        obj.transform.position = ray.origin + ray.direction * (hit.distance - offset);
-
-        //Set Front limit to the workspace
-        if (obj.transform.position.z < GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2)
-        {
-            obj.transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2);//Set the edge of the floor as the limit in depth
-        }
-
-        //Set Back limit to the workspace
-        if (obj.transform.position.z > GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2)
-        {
-            obj.transform.position = new Vector3(obj.transform.position.x, obj.transform.position.y, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2);//Set the edge of the floor as the limit in depth
-        }*/
+        obj.transform.position = vec;
     }
-
     /**********************************************************************/
     // Drag Sounds to Scene
     /**********************************************************************/
 
     public void OnDownObj(GameObject obj)
     {
-        //Reset The Z position on the mouse
-        objDepth = 0.0f;
+
 
         //Duplicate the Icon Object
         DraggedIcon = Instantiate<GameObject>(obj);
@@ -284,8 +242,6 @@ public class Manage3DSounds : MonoBehaviour
 
     public void SelectSoundObj(GameObject myPanel)
     {
-        //Reset The Z position on the mouse
-        objDepth = 0.0f;
 
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
         Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().sizeDelta.x,
@@ -312,14 +268,14 @@ public class Manage3DSounds : MonoBehaviour
                 DraggedObj.GetComponent<Collider>().enabled = false;
             }
         }
-
+        
         //Inactivate All Musical Object Collider - So we can place two sound at the same place
         SetAllColliderState(false);
     }
 
     public void ReleaseSoundObj(GameObject myPanel)
     {
-        //Only whenthe panel contains the Mouse cursor
+        //Only when the panel contains the Mouse cursor
         if (myPanel.GetComponent<RectTransform>().rect.Contains(Input.mousePosition))
         {
             if (DraggedObj)
@@ -341,11 +297,9 @@ public class Manage3DSounds : MonoBehaviour
     /**********************************************************************/
     public void RecycleSound(GameObject bin)
     {
-        Debug.Log(DraggedObj.name);
-
         if (DraggedObj)
         {
-            //Debug.Log("Recycle Object: " + bin.name);
+            Debug.Log("Recycle Object: " + bin.name);
             //Destroy Dragged Object
             Destroy(DraggedObj);
             
@@ -354,3 +308,4 @@ public class Manage3DSounds : MonoBehaviour
         }
     }
 }
+
