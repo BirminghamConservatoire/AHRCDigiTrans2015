@@ -8,19 +8,24 @@ using TBE_3DCore;
 
 public class Manage3DSounds : MonoBehaviour
 {
+
     public Transform soundIcon;
     private AudioClip[] myAudioClips;
 
-    public GameObject mainGraphicPanel;
-
     public GameObject RecycleBin;
+
+    private GameObject Sphere;
+    public GameObject SpherePattern;
+
+    public GameObject mainGraphicPanel;
 
     public GameObject MusicObjGroup;
 
-    private GameObject Sphere;
-
     private GameObject DraggedIcon = null;
     private GameObject DraggedObj = null;
+
+    private Vector2 ResolutionMax;
+
 
 
     void Awake()
@@ -28,14 +33,28 @@ public class Manage3DSounds : MonoBehaviour
         SetIconsfromSoundResources();
     }
 
+    void Start()
+    {
+        ResolutionMax = transform.parent.GetComponent<CanvasScaler>().referenceResolution;
+        Debug.Log("Max Resolution: " + ResolutionMax + " ---  Screen: " + Screen.width +" "+ Screen.height);
+    }
+
     private float distance = 0.0f;
 
     void FixedUpdate()
     {
+
+        //Manage the depth of the KINECT hand in the environment
+        distance += Input.GetAxis("Mouse ScrollWheel");
+        //Clamp Distance
+        distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + SpherePattern.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - SpherePattern.transform.lossyScale.z / 2);
+
+
         //if we have selected an icon and we drag it into the environment
         if (DraggedIcon)
         {
             //On Drag Object
+            //DraggedIcon.transform.position = new Vector2(Input.mousePosition.x * Screen.width/ResolutionMax.x,Input.mousePosition.y * Screen.height/ResolutionMax.y);
             DraggedIcon.transform.position = Input.mousePosition;
             
             //If Mouse cursor is within the mainGraphicPanel
@@ -47,13 +66,8 @@ public class Manage3DSounds : MonoBehaviour
                 //For Kinect2.0
                 ControlSoundObj(Sphere);
 
-                //Set Icon size as a function of the position in depth of the Sphere
-                DraggedIcon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, Sphere.transform.position));
-
-                //Project the Dragged Icomn on the screen 
-                Vector3 posViewport = GameObject.Find("Scene Camera").GetComponent<Camera>().WorldToViewportPoint(Sphere.transform.position);
-                Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y , 0.0f));
-                DraggedIcon.transform.position = posScreen;
+                //Set the Icon on Dragged Object
+                SetIconOnObject(DraggedIcon, Sphere);
             }
 
             // the mouse cursor is located outside the mainGraphicPanel
@@ -70,7 +84,10 @@ public class Manage3DSounds : MonoBehaviour
         {
             //For Kinect 2.0
             ControlSoundObj(DraggedObj);
+
         }
+
+       
     }
 
     /**********************************************************************/
@@ -107,9 +124,9 @@ public class Manage3DSounds : MonoBehaviour
             if (i % 2 == 0)
                 row++;
 
-            float yOffset = iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 15;
+            float yOffset = iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 12;
             //Position
-            iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().sizeDelta.x / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 8 * (row) + yOffset, 0.0f);
+            iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().sizeDelta.x / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 7 * (row) + yOffset, 0.0f);
 
             //Scale
             iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -134,7 +151,7 @@ public class Manage3DSounds : MonoBehaviour
             MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
     }
 
-    void ControlSoundObj(GameObject obj)
+    public void ControlSoundObj(GameObject obj)
     {
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
         Vector2 p = new Vector2((mainGraphicPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - mainGraphicPanel.GetComponent<RectTransform>().position.x) / mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x,
@@ -149,12 +166,6 @@ public class Manage3DSounds : MonoBehaviour
         Ray rayPerspective = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
         Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.red);
 
-        //For Kinect
-        distance += Input.GetAxis("Mouse ScrollWheel");
-
-        //Clamp Distance
-        distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2);
-
         //Vector3 vec = GameObject.Find("SceneCamera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
         //For Kinect Manipulation we project from an orthoCamera 
         Vector3 vec = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + distance));
@@ -166,14 +177,24 @@ public class Manage3DSounds : MonoBehaviour
 
         obj.transform.position = vec;
     }
+
+    //Set the position and scale of dragged icon 
+    public void SetIconOnObject(GameObject dragIcon, GameObject obj)
+    {
+        //Set Icon size as a function of the position in depth of the Sphere
+        dragIcon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, obj.transform.position));
+
+        //Project the Dragged Icon onto the screen 
+        Vector3 posViewport = GameObject.Find("Scene Camera").GetComponent<Camera>().WorldToViewportPoint(obj.transform.position);
+        Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicPanel.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y, 0.0f));
+        dragIcon.transform.position = posScreen;
+    }
     /**********************************************************************/
     // Drag Sounds to Scene
     /**********************************************************************/
 
     public void OnDownObj(GameObject obj)
     {
-
-
         //Duplicate the Icon Object
         DraggedIcon = Instantiate<GameObject>(obj);
 
@@ -186,6 +207,7 @@ public class Manage3DSounds : MonoBehaviour
 
         //Set degree of transparency
         DraggedIcon.GetComponent<RawImage>().color = new Color(DraggedIcon.GetComponent<RawImage>().color.r, DraggedIcon.GetComponent<RawImage>().color.g, DraggedIcon.GetComponent<RawImage>().color.b, 0.25f);
+        /**********************************************************************/
 
         //Create Sphere
         Sphere = Instantiate<GameObject>(GameObject.Find("Sphere"));
@@ -205,10 +227,10 @@ public class Manage3DSounds : MonoBehaviour
         Destroy(GameObject.Find(obj.name + "bis"));
         //Reset Dragged Icon
         DraggedIcon = null;
-
+        /**********************************************************************/
         //Activate All Musical Object Collider
         SetAllColliderState(true);
-
+        /**********************************************************************/
         //If the mouse cursor is outside the mainGraphicPanel when button is up, the sphere is destroyed
         if (!mainGraphicPanel.GetComponent<RectTransform>().rect.Contains(GameObject.Find(obj.name + "bis").transform.position))
             Destroy(Sphere);
@@ -280,18 +302,19 @@ public class Manage3DSounds : MonoBehaviour
 
     public void ReleaseSoundObj(GameObject myPanel)
     {
-        //Only when the panel contains the Mouse cursor
-        if (myPanel.GetComponent<RectTransform>().rect.Contains(Input.mousePosition))
-        {
-            if (DraggedObj)
-            {
-                //Reset collider
-                DraggedObj.GetComponent<Collider>().enabled = true;
 
-                //Reset Dragged Obj
-                DraggedObj = null;
+            //Only when the panel contains the Mouse cursor
+            if (myPanel.GetComponent<RectTransform>().rect.Contains(Input.mousePosition))
+            {
+                if (DraggedObj)
+                {
+                    //Reset collider
+                    DraggedObj.GetComponent<Collider>().enabled = true;
+
+                    //Reset Dragged Obj
+                    DraggedObj = null;
+                }
             }
-        }
 
         //Activate All Musical Object Collider 
         SetAllColliderState(true);
