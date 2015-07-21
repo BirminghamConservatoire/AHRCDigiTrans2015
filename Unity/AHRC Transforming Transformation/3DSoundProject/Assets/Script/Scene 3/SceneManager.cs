@@ -146,10 +146,9 @@ public class SceneManager : MonoBehaviour {
             if (i % 2 == 0)
                 row++;
 
-            float yOffset = iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 12;
-            //Position                                             //We do this below to hack the crappy Rect functionnalities of Unity
-            iconObj.GetComponent<RectTransform>().localPosition = new Vector3(Mathf.Abs(controlPanel.GetComponent<RectTransform>().pivot.x) * controlPanel.GetComponent<RectTransform>().sizeDelta.x, Mathf.Abs(controlPanel.GetComponent<RectTransform>().pivot.y) * controlPanel.GetComponent<RectTransform>().sizeDelta.y + controlPanel.GetComponent<RectTransform>().sizeDelta.y, 0.0f) 
-                                                                                + new Vector3(iconObj.parent.GetComponent<RectTransform>().sizeDelta.x / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().sizeDelta.y / 7 * (row) + yOffset, 0.0f);
+            float yOffset = iconObj.parent.GetComponent<RectTransform>().rect.height / 12;
+            //Position                                             //We do this below to hack the crappy Rect functionnalities of Unity - if Anchor is Left top corner of the rect transform not of the parent
+            iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().rect.width / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().rect.height / 7 * (row) + yOffset, 0.0f);
 
             //Scale
             iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -172,8 +171,8 @@ public class SceneManager : MonoBehaviour {
     public void ControlSoundObj(GameObject obj)
     {
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
-        Vector2 p = new Vector2((mainGraphicWindow.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (Input.mousePosition.x - mainGraphicWindow.GetComponent<RectTransform>().position.x) / mainGraphicWindow.GetComponent<RectTransform>().sizeDelta.x,
-                                (mainGraphicWindow.transform.parent.GetComponent<RectTransform>().sizeDelta.y / Screen.height) * (Input.mousePosition.y - mainGraphicWindow.GetComponent<RectTransform>().position.y) / mainGraphicWindow.GetComponent<RectTransform>().sizeDelta.y);
+        Vector2 p = new Vector2((mainGraphicWindow.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (Input.mousePosition.x - mainGraphicWindow.GetComponent<RectTransform>().position.x) / mainGraphicWindow.GetComponent<RectTransform>().rect.width,
+                                (mainGraphicWindow.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (Input.mousePosition.y - mainGraphicWindow.GetComponent<RectTransform>().position.y) / mainGraphicWindow.GetComponent<RectTransform>().rect.height);
         //Clamp the value of p
         p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
         p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
@@ -200,21 +199,16 @@ public class SceneManager : MonoBehaviour {
     //Set the position and scale of dragged icon 
     public void SetIconOnObject(GameObject dragIcon, GameObject obj)
     {
+        
         //Set Icon size as a function of the position in depth of the Sphere
         dragIcon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, obj.transform.position));
 
         //Project the Dragged Icon onto the screen 
         Vector3 posViewport = GameObject.Find("Scene Camera").GetComponent<Camera>().WorldToViewportPoint(obj.transform.position);
-        Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicWindow.GetComponent<RectTransform>().sizeDelta.x / Screen.width, posViewport.y, 0.0f));
-        dragIcon.transform.position = posScreen;
 
-        //If the hand is located onto the lateral panel - then the icon follow the hand on x & y
-        /*if (!mainGraphicWindow.GetComponent<RectTransform>().rect.Contains(Input.mousePosition))
-        {
-            dragIcon.transform.position = new Vector3(Input.mousePosition.x,
-                                                      Input.mousePosition.y,
-                                                      0.0f);
-        }*/
+        Vector3 posScreen = GameObject.Find("Main Camera").GetComponent<Camera>().ViewportToScreenPoint(new Vector3(posViewport.x * mainGraphicWindow.GetComponent<RectTransform>().anchorMax.x, posViewport.y, 0.0f));
+
+        dragIcon.transform.position =posScreen;
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(mainGraphicWindow.GetComponent<RectTransform>(), Input.mousePosition, null, out point);
         if (!mainGraphicWindow.GetComponent<RectTransform>().rect.Contains(point))
@@ -312,10 +306,10 @@ public class SceneManager : MonoBehaviour {
     /**********************************************************************/
     public void SelectSoundObj(GameObject myPanel)
     {
-
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
-        Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.x / Screen.width) * (myHandRectTransform.position.x/*Input.mousePosition.x*/ - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().sizeDelta.x,
-                                (myPanel.transform.parent.GetComponent<RectTransform>().sizeDelta.y / Screen.height) * (myHandRectTransform.position.y/*Input.mousePosition.y*/ - myPanel.GetComponent<RectTransform>().position.y) / myPanel.GetComponent<RectTransform>().sizeDelta.y);
+        Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (myHandRectTransform.position.x/*Input.mousePosition.x*/ - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().rect.width,
+                                (myPanel.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (myHandRectTransform.position.y/*Input.mousePosition.y*/ - myPanel.GetComponent<RectTransform>().position.y) / myPanel.GetComponent<RectTransform>().rect.height);
+
         //Clamp the value of p
         p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
         p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
