@@ -284,6 +284,7 @@ public class SceneManager : MonoBehaviour {
 
             //Create the 3Dception Sound component
             Sphere.AddComponent<TBE_Source>();
+			Sphere.GetComponent<TBE_Source>().loop = true;
 
             //Debug.Log("Release Object: " + obj.name + " and " + Sphere.name);
 
