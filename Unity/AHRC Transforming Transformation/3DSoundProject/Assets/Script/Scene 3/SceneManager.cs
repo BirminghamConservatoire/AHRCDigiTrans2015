@@ -48,6 +48,19 @@ public class SceneManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+		// Do we already have any sound objects in the environment
+		if (MusicObjGroup.transform.childCount > 1) 
+		{
+			for (int i = 1; i < MusicObjGroup.transform.childCount; i++) 
+			{
+				MusicObjGroup.transform.GetChild(i).GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
+			}
+
+		}
+		
+		
+
 	
 	}
 
