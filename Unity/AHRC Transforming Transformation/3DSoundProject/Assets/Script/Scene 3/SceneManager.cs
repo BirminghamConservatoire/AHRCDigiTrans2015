@@ -45,19 +45,21 @@ public class SceneManager : MonoBehaviour {
 
         SetIconsfromSoundResources();
 	}
-	
+
+	void SyncAudioSources (GameObject sphere)
+	{
+		// If we already at least one sound object in the environment
+		if (MusicObjGroup.transform.childCount > 1) 
+		{
+			// Sync the sample number for the passed-in sphere to the first-added sphere
+			sphere.GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
+		}
+	}
+
 	// Update is called once per frame
 	void Update () {
 
-		// Do we already have any sound objects in the environment
-		if (MusicObjGroup.transform.childCount > 1) 
-		{
-			for (int i = 1; i < MusicObjGroup.transform.childCount; i++) 
-			{
-				MusicObjGroup.transform.GetChild(i).GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
-			}
 
-		}
 		
 		
 
@@ -75,6 +77,9 @@ public class SceneManager : MonoBehaviour {
 
         /************************************************************************************************/
         
+
+
+
         //if we have selected an icon and we drag it into the environment
         if (DraggedIcon)
         {
@@ -117,11 +122,23 @@ public class SceneManager : MonoBehaviour {
         {
             //Button is release - sound is released in the environment
             if (DraggedIcon)
+			{
                 OnUpObj(DraggedIcon);
+				SyncAudioSources(Sphere);
+			}
+
+
 
         }
-        /************************************************************************************************/
+        
+
+
+
+		/************************************************************************************************/
     
+
+
+
     }
 
     /************************************************************************************************************/
