@@ -330,8 +330,6 @@ public class SceneManager : MonoBehaviour {
 
     public void OnUpObj(GameObject obj)
     {
-        Debug.Log("Release Icon");
-
         //Delete the Icon Obj
         Destroy(GameObject.Find(obj.name));
         //Reset Dragged Icon
@@ -428,7 +426,7 @@ public class SceneManager : MonoBehaviour {
         
         if (DraggedObj)
         {
-            Debug.Log("Release: " + DraggedObj);
+            //Debug.Log("Release: " + DraggedObj);
             //Reset collider
             DraggedObj.GetComponent<Collider>().enabled = true;
 
