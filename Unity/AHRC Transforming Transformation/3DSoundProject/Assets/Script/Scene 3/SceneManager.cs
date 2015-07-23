@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using System.IO;
+//3DCeption Library
 using TBE_3DCore;
 
 public class SceneManager : MonoBehaviour {
@@ -14,7 +16,7 @@ public class SceneManager : MonoBehaviour {
     public GameObject SpherePattern;
 
     public Transform soundIcon;
-    private AudioClip[] myAudioClips;
+    public AudioClip[] myAudioClips;
 
     public GameObject MusicObjGroup;
 
@@ -43,7 +45,9 @@ public class SceneManager : MonoBehaviour {
         cam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         myHandRectTransform = GameObject.Find("HandIcon").GetComponent<RectTransform>();
 
-        SetIconsfromSoundResources();
+        //Load Audio Samples
+        LoadAudioSamples();
+
 	}
 	
 	// Update is called once per frame
@@ -58,10 +62,7 @@ public class SceneManager : MonoBehaviour {
 			}
 
 		}
-		
-		
 
-	
 	}
 
     void FixedUpdate()
@@ -128,45 +129,105 @@ public class SceneManager : MonoBehaviour {
     /************************************************************************************************************/
     // Generic Functions
     /************************************************************************************************************/
-    void SetIconsfromSoundResources()
+
+    void LoadAudioSamples()
     {
-        int row = 0;
+        /*********************************************************/
+        //Get Files
+        /*********************************************************/
+        DirectoryInfo directoryInformation = new DirectoryInfo("AudioClips");
+        if (!directoryInformation.Exists)
+            directoryInformation.Create();
 
-        //Load all the clips from the Resources\Clips
-        myAudioClips = Resources.LoadAll<AudioClip>("Clips");
+        FileInfo[] fileList = directoryInformation.GetFiles();
+        Debug.Log ("Number of Files: " + fileList.Length);
+        /*********************************************************/
 
-        //For each clip
+        
+        myAudioClips = new AudioClip[fileList.Length];
+        
         for (int i = 0; i < myAudioClips.Length; i++)
         {
-            //Instantiate the prefab
-            Transform iconObj = Instantiate(soundIcon);
+            /*********************************************************/
+            //Load & Store Audio Files 
+            /*********************************************************/
+            string url;
+            
+            #if UNITY_STANDALONE_WIN
+                url= "file:///" + fileList[i].FullName;
+            #endif
 
-            //Set it up in the hierarchy
-            iconObj.SetParent(controlPanel.transform);
+            #if UNITY_EDITOR_WIN
+                url = "file:///" + fileList[i].FullName;
+            #endif
 
-            //Name the IconObj
-            iconObj.name = myAudioClips[i].name;
+            #if UNITY_STANDALONE_OSX
+                url = "file://" + fileList[i].FullName;
+            #endif
 
-            //Set the Icon text
-            iconObj.GetChild(0).GetComponent<Text>().text = myAudioClips[i].name;
+            #if UNITY_EDITOR_OSX
+                url = "file://" + fileList[i].FullName;
+            #endif
 
-            //Activate IconObj
-            iconObj.gameObject.SetActive(true);
+
+            url = url.Replace("\\", "/");
+            WWW www = new WWW(url);
+
+            AudioClip clip = www.GetAudioClip(false);
+
+            while (clip.loadState != AudioDataLoadState.Loaded)
+            {
+                Debug.Log("Loading... " + clip.name);
+            }
+
+            clip.name = Path.GetFileName(url);
+            Debug.Log("done loading... " + clip.name);
+
+            myAudioClips[i] = clip;
+            /*********************************************************/
 
             /*********************************************************/
-            //Set RectTransform
-            //we maximize the number of icon per row to 2
-            if (i % 2 == 0)
-                row++;
-
-            float yOffset = iconObj.parent.GetComponent<RectTransform>().rect.height / 12;
-            //Position                                             //We do this below to hack the crappy Rect functionnalities of Unity - if Anchor is Left top corner of the rect transform not of the parent
-            iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().rect.width / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().rect.height / 7 * (row) + yOffset, 0.0f);
-
-            //Scale
-            iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            //Organize Audio Samples Icons in Interface
             /*********************************************************/
-        }
+            SetIconsfromSoundResources(i);
+            /*********************************************************/
+        }   
+    }
+
+
+    private int row = 0;
+    
+    void SetIconsfromSoundResources(int i)
+    {
+        //Instantiate the prefab
+        Transform iconObj = Instantiate(soundIcon);
+
+        //Set it up in the hierarchy
+        iconObj.SetParent(controlPanel.transform);
+
+        //Name the IconObj
+        iconObj.name = myAudioClips[i].name;
+
+        //Set the Icon text
+        iconObj.GetChild(0).GetComponent<Text>().text = myAudioClips[i].name;
+
+        //Activate IconObj
+        iconObj.gameObject.SetActive(true);
+
+        /*********************************************************/
+        //Set RectTransform
+        /*********************************************************/
+        //we maximize the number of icon per row to 2
+        if (i % 2 == 0)
+            row++;
+
+        float yOffset = iconObj.parent.GetComponent<RectTransform>().rect.height / 12;
+        //Position                                             //We do this below to hack the crappy Rect functionnalities of Unity - if Anchor is Left top corner of the rect transform not of the parent
+        iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().rect.width / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().rect.height / 7 * (row) + yOffset, 0.0f);
+
+        //Scale
+        iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
+        /*********************************************************/
     }
 
     /************************************************************************************************************/
@@ -175,7 +236,7 @@ public class SceneManager : MonoBehaviour {
     public //Set State of collider of Musical Objects
     void SetAllColliderState(bool state)
     {
-        Debug.Log("collider state is " + state);
+        //Debug.Log("collider state is " + state);
         for (int i = 0; i < MusicObjGroup.transform.childCount; i++)
             MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
     }
@@ -273,6 +334,7 @@ public class SceneManager : MonoBehaviour {
 
         /**********************************************************************/
         //Activate All Musical Object Collider
+        /**********************************************************************/
         SetAllColliderState(true);
         /**********************************************************************/
 
