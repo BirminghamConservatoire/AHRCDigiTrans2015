@@ -31,12 +31,12 @@ public class SceneManager : MonoBehaviour {
     public GameObject DraggedObj = null;
 
 
-
+    public bool dragged = false;
+    private DoubleClickManager myDoubleClickManagerScript;
 
     /************************************************************************************************************/
 	// Use this for initialization
 	void Start () {
-
 
         //ResolutionMax = controlPanel.transform.parent.GetComponent<CanvasScaler>().referenceResolution;
         //Debug.Log("Max Resolution: " + ResolutionMax + " ---  Screen: " + Screen.width + " " + Screen.height);
@@ -48,6 +48,8 @@ public class SceneManager : MonoBehaviour {
         //Load Audio Samples
         LoadAudioSamples();
 
+        myDoubleClickManagerScript = GameObject.Find("Main Camera").GetComponent<DoubleClickManager>();
+
 	}
 
 	void SyncAudioSources (GameObject sphere)
@@ -58,19 +60,8 @@ public class SceneManager : MonoBehaviour {
 			// Sync the sample number for the passed-in sphere to the first-added sphere
 			sphere.GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
 		}
-<<<<<<< HEAD
-=======
 	}
 
-	// Update is called once per frame
-	void Update () {
-
-
-		
-		
->>>>>>> origin/develop
-
-	}
 
     void FixedUpdate()
     {
@@ -82,10 +73,6 @@ public class SceneManager : MonoBehaviour {
         /************************************************************************************************/
 
         /************************************************************************************************/
-        
-
-
-
         //if we have selected an icon and we drag it into the environment
         if (DraggedIcon)
         {
@@ -124,26 +111,20 @@ public class SceneManager : MonoBehaviour {
 
         }
 
-        if (!Input.GetMouseButton(0))
+        if (/*!Input.GetMouseButton(0)  */ myDoubleClickManagerScript.doubleClickOff)
         {
             //Button is release - sound is released in the environment
             if (DraggedIcon)
 			{
                 OnUpObj(DraggedIcon);
 				SyncAudioSources(Sphere);
+
+                myDoubleClickManagerScript.doubleClickOff = false;
 			}
 
-
-
         }
-        
-
-
 
 		/************************************************************************************************/
-    
-
-
 
     }
 
@@ -162,7 +143,7 @@ public class SceneManager : MonoBehaviour {
             directoryInformation.Create();
 
         FileInfo[] fileList = directoryInformation.GetFiles();
-        Debug.Log ("Number of Files: " + fileList.Length);
+        //Debug.Log ("Number of Files: " + fileList.Length);
         /*********************************************************/
 
         
@@ -199,11 +180,11 @@ public class SceneManager : MonoBehaviour {
 
             while (clip.loadState != AudioDataLoadState.Loaded)
             {
-                Debug.Log("Loading... " + clip.name);
+                //Debug.Log("Loading... " + clip.name);
             }
 
             clip.name = Path.GetFileName(url);
-            Debug.Log("done loading... " + clip.name);
+            //Debug.Log("done loading... " + clip.name);
 
             myAudioClips[i] = clip;
             /*********************************************************/
@@ -349,6 +330,8 @@ public class SceneManager : MonoBehaviour {
 
     public void OnUpObj(GameObject obj)
     {
+        Debug.Log("Release Icon");
+
         //Delete the Icon Obj
         Destroy(GameObject.Find(obj.name));
         //Reset Dragged Icon
