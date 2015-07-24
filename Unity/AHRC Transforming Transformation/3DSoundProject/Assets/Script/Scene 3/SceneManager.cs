@@ -30,6 +30,8 @@ public class SceneManager : MonoBehaviour {
     private GameObject DraggedIcon = null;
     public GameObject DraggedObj = null;
 
+
+    public bool dragged = false;
     private DoubleClickManager myDoubleClickManagerScript;
 
     /************************************************************************************************************/
@@ -69,8 +71,6 @@ public class SceneManager : MonoBehaviour {
         //Clamp Distance
         distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + SpherePattern.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - SpherePattern.transform.lossyScale.z / 2);
         /************************************************************************************************/
-
-
 
         /************************************************************************************************/
         //if we have selected an icon and we drag it into the environment
