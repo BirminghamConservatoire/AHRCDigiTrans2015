@@ -31,7 +31,6 @@ public class SceneManager : MonoBehaviour {
     public GameObject DraggedObj = null;
 
 
-    public bool dragged = false;
     private DoubleClickManager myDoubleClickManagerScript;
 
     /************************************************************************************************************/
@@ -50,16 +49,6 @@ public class SceneManager : MonoBehaviour {
 
         myDoubleClickManagerScript = GameObject.Find("Main Camera").GetComponent<DoubleClickManager>();
 
-	}
-
-	void SyncAudioSources (GameObject sphere)
-	{
-		// If we already at least one sound object in the environment
-		if (MusicObjGroup.transform.childCount > 1) 
-		{
-			// Sync the sample number for the passed-in sphere to the first-added sphere
-			sphere.GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
-		}
 	}
 
 
@@ -108,7 +97,6 @@ public class SceneManager : MonoBehaviour {
         {
             //For Kinect 2.0
             ControlSoundObj(DraggedObj);
-
         }
 
         if (/*!Input.GetMouseButton(0)  */ myDoubleClickManagerScript.doubleClickOff)
@@ -121,7 +109,6 @@ public class SceneManager : MonoBehaviour {
 
                 myDoubleClickManagerScript.doubleClickOff = false;
 			}
-
         }
 
 		/************************************************************************************************/
@@ -231,6 +218,16 @@ public class SceneManager : MonoBehaviour {
         //Scale
         iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
         /*********************************************************/
+    }
+
+    void SyncAudioSources(GameObject sphere)
+    {
+        // If we already at least one sound object in the environment
+        if (MusicObjGroup.transform.childCount > 1)
+        {
+            // Sync the sample number for the passed-in sphere to the first-added sphere
+            sphere.GetComponent<TBE_Source>().timeSamples = MusicObjGroup.transform.GetChild(0).GetComponent<TBE_Source>().timeSamples;
+        }
     }
 
     /************************************************************************************************************/

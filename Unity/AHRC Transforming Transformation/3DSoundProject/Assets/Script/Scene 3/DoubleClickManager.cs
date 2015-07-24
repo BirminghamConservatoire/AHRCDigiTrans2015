@@ -18,6 +18,7 @@ public class DoubleClickManager : MonoBehaviour {
 
     private SceneManager mySceneManagerScript;
 
+
 	// Use this for initialization
 	void Start () {
 
@@ -83,7 +84,5 @@ public class DoubleClickManager : MonoBehaviour {
                 }
             }  
         }
-        /**************************************************************************/
-
 	}
 }
