@@ -95,11 +95,11 @@ public class SceneManager : MonoBehaviour {
         //If we have selected an object and we dragged it through th eenvironment
         if (DraggedObj)
         {
-            //For Kinect 2.0
+            //For Kinect 2.0 - code goes here
             ControlSoundObj(DraggedObj);
         }
 
-        if (/*!Input.GetMouseButton(0)  */ myDoubleClickManagerScript.doubleClickOff)
+        if (!Input.GetMouseButton(0)   /*myDoubleClickManagerScript.doubleClickOff*/)
         {
             //Button is release - sound is released in the environment
             if (DraggedIcon)
@@ -267,6 +267,7 @@ public class SceneManager : MonoBehaviour {
                           Mathf.Clamp(vec.z, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2));
 
         obj.transform.position = vec;
+
     }
 
 
@@ -413,6 +414,9 @@ public class SceneManager : MonoBehaviour {
 
                     //Inactivate All Musical Object Collider - So we can place two sound at the same place
                     SetAllColliderState(false);
+
+                    //Manage the Double Click
+                    GameObject.Find("Main Camera").GetComponent<DoubleClickManager>().doubleClicked = true;
                 }
             }
         }

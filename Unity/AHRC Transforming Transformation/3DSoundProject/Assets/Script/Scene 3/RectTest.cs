@@ -39,7 +39,7 @@ public class RectTest : MonoBehaviour {
             GameObject.Find("DebugText").GetComponent<Text>().text = "Cursor over: " + transform.name;
 
             //If an icon is clicked
-            if (/*Input.GetMouseButtonDown(0)*/ myDoubleClickManagerScript .doubleClickOn && rectTransform.gameObject.tag == "icon")
+            if (Input.GetMouseButtonDown(0) /*myDoubleClickManagerScript .doubleClickOn*/ && rectTransform.gameObject.tag == "icon")
             {
                 //Debug.Log("Icon clicked: " + rectTransform.gameObject.name);
                 //Icon Selected
@@ -71,7 +71,7 @@ public class RectTest : MonoBehaviour {
                         mySceneManagerScript.RecycleSound(rectTransform.gameObject);
 
                     myDoubleClickManagerScript.doubleClickOff = false;
-                }  
+                }
             }
         }
     }

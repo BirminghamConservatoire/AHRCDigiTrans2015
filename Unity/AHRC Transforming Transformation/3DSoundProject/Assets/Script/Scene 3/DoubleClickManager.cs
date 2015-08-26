@@ -14,6 +14,8 @@ public class DoubleClickManager : MonoBehaviour {
 
     private int clickCount = 0;
     private int doubleClickCount = 0;
+
+    public bool doubleClicked = false;
     /**********************************/
 
     private SceneManager mySceneManagerScript;
@@ -57,6 +59,9 @@ public class DoubleClickManager : MonoBehaviour {
                         doubleClickOn = true;
                         doubleClickOff = false;
 
+                        //Double setup in SceneManager::SelectSoundObj(GameObject myPanel)
+                        //doubleClicked = true;
+
                         doubleClickCount++;
                     }
                     else
@@ -66,6 +71,8 @@ public class DoubleClickManager : MonoBehaviour {
 
                         doubleClickOn = false;
                         doubleClickOff = true;
+
+                        doubleClicked = false;
 
                         doubleClickCount = 0;
                     }

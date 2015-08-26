@@ -30,7 +30,7 @@ public class HandCursorManager : MonoBehaviour {
 
     void FixedUpdate()
     {
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) || GameObject.Find("Main Camera").GetComponent<DoubleClickManager>().doubleClicked)
             HandObjIcon.GetComponent<RawImage>().texture = HandFist;
         else
             HandObjIcon.GetComponent<RawImage>().texture = HandFinger;
