@@ -2,6 +2,7 @@
 using System.Collections;
 using Windows.Kinect;
 using UnityEngine.UI;
+using TBE_3DCore;
 
 public class myKinectManager : MonoBehaviour
 {
@@ -37,6 +38,11 @@ public class myKinectManager : MonoBehaviour
     public bool hasBeenSelectedbyHand = false;
 
     private bool prevRightHandOpenState = false;
+
+    private bool leftHandVolumeCtrl = false;
+    private Vector3 currentLeftHandPos;
+    private Vector3 lastLeftHandPos;
+    private Vector3 deltaLeftHandPos;
 
     void Start()
     {
@@ -102,7 +108,7 @@ public class myKinectManager : MonoBehaviour
 
                             prevRightHandOpenState = false;
                         }
-                        if (_Data[idx].HandRightState == HandState.Open)
+                        if (_Data[idx].HandRightState == HandState.Open || _Data[idx].HandRightState == HandState.Lasso)
                         {
                             //Debug.Log("Right Hand Closed");
                             RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
@@ -137,11 +143,54 @@ public class myKinectManager : MonoBehaviour
                     else
                     {
                         //Manage Right Hand Position when not tracked
-                        currentRightHandPos = new Vector3((float)(_Data[idx].Joints[JointType.HandRight].Position.X * 10.0f),
+                        /*currentRightHandPos = new Vector3((float)(_Data[idx].Joints[JointType.HandRight].Position.X * 10.0f),
                                                         (float)(_Data[idx].Joints[JointType.HandRight].Position.Y * 10.0f),
-                                                        -(float)(_Data[idx].Joints[JointType.HandRight].Position.Z * 10.0f));
+                                                        -(float)(_Data[idx].Joints[JointType.HandRight].Position.Z * 10.0f));*/
+                        currentRightHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandRight].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+                                                        (float)((_Data[idx].Joints[JointType.HandRight].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+                                                        (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
                         deltaRightHandPos = new Vector3(0.0f,0.0f,0.0f);
                         lastRightHandPos = currentRightHandPos;
+                    }
+
+
+                    if (_Data[idx].HandLeftState != HandState.NotTracked)
+                    {
+                        //Manage Left Hand Position when tracked
+
+                        //Manage Volume Control
+                        if (_Data[idx].HandLeftState == HandState.Closed)
+                        {
+                            //Debug.Log("Closed");
+                            leftHandVolumeCtrl = false;
+                        }
+                        if (_Data[idx].HandLeftState == HandState.Open)
+                        {
+                            //Debug.Log("Open");
+                            leftHandVolumeCtrl = false;
+                        }
+                        if (_Data[idx].HandLeftState == HandState.Lasso)
+                        {
+                            //Debug.Log("Lasso");
+                            leftHandVolumeCtrl = true;
+                        }
+
+                        currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+                                                        (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+                                                        (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+                        deltaLeftHandPos = currentLeftHandPos - lastLeftHandPos;
+                        lastLeftHandPos = currentLeftHandPos;
+
+                    }
+
+                    else 
+                    {
+                        //Manage Left Hand Position when not tracked
+                        currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+                                                        (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+                                                        (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+                        deltaLeftHandPos = new Vector3(0.0f, 0.0f, 0.0f);
+                        lastLeftHandPos = currentLeftHandPos;
                     }
                 }
             }
@@ -149,7 +198,23 @@ public class myKinectManager : MonoBehaviour
 
         //Project Kinect hand to the screen as Icon
         ProjectControlObjectOntoScreen(RightHandIcon, RightHandObj, currentRightHandPos);
-        
+
+        //Control the volume of Dragged Object
+        if (mySceneManagerScript.DraggedObj)
+        {
+            if (leftHandVolumeCtrl)
+            {
+                //Control Volume
+                mySceneManagerScript.ControlObjVolume(mySceneManagerScript.DraggedObj, deltaLeftHandPos.y / 10.0f);
+
+                //Manage Interface to control volume
+                mySceneManagerScript.ManageVolumeInterface(true, mySceneManagerScript.DraggedObj);
+            }
+            else //Hide Interface to control volume
+                mySceneManagerScript.ManageVolumeInterface(false, mySceneManagerScript.DraggedObj);
+        }
+        else //Hide Interface to control volume
+            mySceneManagerScript.ManageVolumeInterface(false, null);   
     }
 
 

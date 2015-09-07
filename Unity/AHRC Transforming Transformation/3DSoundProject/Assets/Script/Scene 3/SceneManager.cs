@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.IO;
 //3DCeption Library
 using TBE_3DCore;
+using UnityEditor;
 
 public class SceneManager : MonoBehaviour {
 
@@ -28,6 +29,8 @@ public class SceneManager : MonoBehaviour {
     public GameObject DraggedObj = null;
 
     private myKinectManager myKinectManagerScript;
+
+    public GameObject volumeInterface; 
 
     /************************************************************************************************************/
 	// Use this for initialization
@@ -235,6 +238,35 @@ public class SceneManager : MonoBehaviour {
         obj.transform.position = vec;
     }
 
+    //Control Volume of the Dragged Object - as a function of left hand position
+    public void ControlObjVolume(GameObject obj, float deltaVol)
+    {
+
+        obj.GetComponent<TBE_Source>().volume += deltaVol;
+    }
+
+
+    private float h = 0.0f;
+    private float s = 0.0f;
+    private float v = 0.0f;
+
+    //public Manage the Interface which show volume variation
+    public void ManageVolumeInterface(bool show, GameObject obj)
+    {
+        volumeInterface.SetActive(show);
+
+        if (obj != null && volumeInterface.activeSelf == true)
+        {
+            volumeInterface.transform.GetChild(0).GetComponent<Slider>().value = DraggedObj.GetComponent<TBE_Source>().volume;
+
+            //Change the Color Saturation of Dragged Object
+            EditorGUIUtility.RGBToHSV(obj.GetComponent<Renderer>().material.color,out h,out s, out v);
+            //Debug.Log(h + "    " + s + "   " + "    " + v);
+            s = volumeInterface.transform.GetChild(0).GetComponent<Slider>().value;
+            s = Mathf.Clamp(s, 0.01f, 1.0f);//Clamp otherwise the hue is reset
+            DraggedObj.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(h, s, v);
+        }
+    }
 
     //Set the position and scale of dragged icon 
     public void SetIconOnObject(GameObject dragIcon, GameObject obj, Vector3 myInput)
@@ -279,9 +311,10 @@ public class SceneManager : MonoBehaviour {
         Sphere = Instantiate<GameObject>(GameObject.Find("Sphere"));
         Sphere.name = "Sound_" + obj.name;
         
-        //Set Random color to Sphere
-        Sphere.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
-        
+        //Set Random color to Sphere - Color is define in HSV 
+        Sphere.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(Random.Range(0.0f, 1.0f), 1.0f, 1.0f);
+        //Sphere.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+
         //Edit 3D text mesh
         Sphere.transform.GetChild(0).GetComponent<TextMesh>().text = obj.name;
 
