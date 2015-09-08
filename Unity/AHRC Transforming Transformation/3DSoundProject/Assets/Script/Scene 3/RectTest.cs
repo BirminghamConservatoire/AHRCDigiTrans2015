@@ -50,7 +50,7 @@ public class RectTest : MonoBehaviour {
                 myKinectManagerScript.selectionStateMachine = 0.0f;
             }
 
-            //If Hand state from open to closeopen -> Select actions
+            //If Hand state from open to close -> Select actions
             if (myKinectManagerScript.selectionStateMachine == 1 && rectTransform.gameObject.tag == "main window")
             {
                 //Debug.Log("Right hand select in Main Window");

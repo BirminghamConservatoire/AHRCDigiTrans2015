@@ -86,6 +86,39 @@ public class SceneManager : MonoBehaviour {
 
     }
 
+    void LateUpdate()
+    {
+        float hue;
+        float sat;
+        float val;
+
+        //Check distance between object
+        for (int i = 0; i < GameObject.Find("SoundsObjGrpInScene").transform.childCount; i++)
+        {
+            for (int j = 0; j < GameObject.Find("SoundsObjGrpInScene").transform.childCount; j++)
+            {
+                //Compare location distance
+                float howFar = Vector3.Distance(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).position, GameObject.Find("SoundsObjGrpInScene").transform.GetChild(j).position);
+
+                if (howFar > 0.0f && howFar < SpherePattern.transform.lossyScale.z)
+                {
+                    //Highlight the object in contact    
+                    float highlight = 1.0f;
+                    EditorGUIUtility.RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(hue, sat, highlight);
+                    break;
+                }
+                else
+                {
+                    //Highlight the object in contact    
+                    float highlight = 0.5f;
+                    EditorGUIUtility.RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(hue, sat, highlight);
+                }
+            }
+        }
+    }
+
     /************************************************************************************************************/
     /************************************************************************************************************/
     // Generic Functions
@@ -226,7 +259,7 @@ public class SceneManager : MonoBehaviour {
 
         //For Kinect Manipulation we project from an orthoCamera 
         Ray rayPerspective = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
-        Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.green);
+        //Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.green);
 
         Vector3 vec = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + myKinectManagerScript.distance));
         
@@ -262,8 +295,7 @@ public class SceneManager : MonoBehaviour {
             //Change the Color Saturation of Dragged Object
             EditorGUIUtility.RGBToHSV(obj.GetComponent<Renderer>().material.color,out h,out s, out v);
             //Debug.Log(h + "    " + s + "   " + "    " + v);
-            s = volumeInterface.transform.GetChild(0).GetComponent<Slider>().value;
-            s = Mathf.Clamp(s, 0.01f, 1.0f);//Clamp otherwise the hue is reset
+            s = 0.99f*volumeInterface.transform.GetChild(0).GetComponent<Slider>().value + 0.01f;//Sort of clamping the color - other when reconverting the hue is set to null
             DraggedObj.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(h, s, v);
         }
     }
@@ -308,11 +340,11 @@ public class SceneManager : MonoBehaviour {
         /**********************************************************************/
 
         //Create Sphere
-        Sphere = Instantiate<GameObject>(GameObject.Find("Sphere"));
+        Sphere = Instantiate<GameObject>(SpherePattern);
         Sphere.name = "Sound_" + obj.name;
         
         //Set Random color to Sphere - Color is define in HSV 
-        Sphere.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(Random.Range(0.0f, 1.0f), 1.0f, 1.0f);
+        Sphere.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(Random.Range(0.0f, 1.0f), 1.0f, 0.5f);
         //Sphere.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
 
         //Edit 3D text mesh
@@ -420,7 +452,7 @@ public class SceneManager : MonoBehaviour {
 
         //Projection from main ortho Camera (Viewport) to Perspective Camera
         Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
-        Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.red);
+        //Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 1000, Color.red);
 
         //Debug.Log(Vector3.Distance(rayPerspective.origin, handObj.transform.position) + 0.5f);
 
