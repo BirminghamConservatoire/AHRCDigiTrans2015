@@ -61,7 +61,14 @@ public class RectTest : MonoBehaviour {
                 //Reset the state machine
                 myKinectManagerScript.selectionStateMachine = 0.0f;
             }
+            //If Hand state from open to close -> TrashAll Items
+            if (myKinectManagerScript.selectionStateMachine == 1 && rectTransform.gameObject.tag == "trashAll")
+            {
+                mySceneManagerScript.RecycleAllSounds();
 
+                //Reset the state machine
+                myKinectManagerScript.selectionStateMachine = 0.0f;
+            }
             //If Hand state from close to open -> Release actions
             if (myKinectManagerScript.selectionStateMachine == -1)
             {
@@ -70,10 +77,12 @@ public class RectTest : MonoBehaviour {
                 {
                     //Debug.Log("Release Obj " + rectTransform.gameObject);
 
-                    if (rectTransform.gameObject.tag != "bin")
+                    if (rectTransform.gameObject.tag != "bin" && rectTransform.gameObject.tag != "trashAll")
                         mySceneManagerScript.ReleaseSoundObj(rectTransform.gameObject);
-                    else//Release Obj into the bin
+                    else if (rectTransform.gameObject.tag == "bin")//Release Obj into the bin
                         mySceneManagerScript.RecycleSound(rectTransform.gameObject);
+                    else if (rectTransform.gameObject.tag == "trashAll")//Release Obj into the bin
+                        mySceneManagerScript.RecycleAllSounds();
 
                     //Reset the state machine
                     myKinectManagerScript.selectionStateMachine = 0.0f;

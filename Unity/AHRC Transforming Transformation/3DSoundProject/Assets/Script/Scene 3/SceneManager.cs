@@ -217,7 +217,7 @@ public class SceneManager : MonoBehaviour {
 
         float yOffset = iconObj.parent.GetComponent<RectTransform>().rect.height / 12;
         //Position                                             //We do this below to hack the crappy Rect functionnalities of Unity - if Anchor is Left top corner of the rect transform not of the parent
-        iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().rect.width / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().rect.height / 7 * (row) + yOffset, 0.0f);
+        iconObj.GetComponent<RectTransform>().localPosition = new Vector3(iconObj.parent.GetComponent<RectTransform>().rect.width / 4 * (1 + 2 * (i % 2)), -iconObj.parent.GetComponent<RectTransform>().rect.height / 5 * (row) + yOffset, 0.0f);
 
         //Scale
         iconObj.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -321,12 +321,14 @@ public class SceneManager : MonoBehaviour {
     /**********************************************************************/
     // Select/Release for Dragging Sound into Scene from control Panel
     /**********************************************************************/
-
+    private GameObject myLastSelectedIcon;
     public void OnDownObj(GameObject obj)
     {
         //Debug.Log("Create Icon Object");
         //Duplicate the Icon Object
         DraggedIcon = Instantiate<GameObject>(obj);
+
+        myLastSelectedIcon = obj;
 
         //Rename Object
         DraggedIcon.name = obj.name + "_drag_icon";
@@ -337,6 +339,15 @@ public class SceneManager : MonoBehaviour {
 
         //Set degree of transparency
         DraggedIcon.GetComponent<RawImage>().color = new Color(DraggedIcon.GetComponent<RawImage>().color.r, DraggedIcon.GetComponent<RawImage>().color.g, DraggedIcon.GetComponent<RawImage>().color.b, 0.25f);
+        
+        //Grey the selected icon
+        float hue;
+        float sat;
+        float val;
+
+        EditorGUIUtility.RGBToHSV(obj.GetComponent<RawImage>().color, out hue, out sat, out val);
+        obj.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 0.5f);
+  
         /**********************************************************************/
 
         //Create Sphere
@@ -374,6 +385,17 @@ public class SceneManager : MonoBehaviour {
         {
             //Debug.Log("Destoy out of Main Window");
             Destroy(Sphere);
+
+            //White back the selected icon
+            float hue;
+            float sat;
+            float val;
+
+            EditorGUIUtility.RGBToHSV(myLastSelectedIcon.GetComponent<RawImage>().color, out hue, out sat, out val);
+            myLastSelectedIcon.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+            
+            //Reset Last selected Icon
+            myLastSelectedIcon = null;
         }
         else // The Sphere is naturally placed in the environment
         {
@@ -403,6 +425,12 @@ public class SceneManager : MonoBehaviour {
                     break;
                 }
             }
+
+            //Disable the selection of the Icon
+            myLastSelectedIcon.GetComponent<RectTest>().enabled = false;
+
+            //Reset Last selected Icon
+            myLastSelectedIcon = null;
         }
     }
 
@@ -501,9 +529,63 @@ public class SceneManager : MonoBehaviour {
     /**********************************************************************/
     public void RecycleSound(GameObject bin)
     {
+
         if (DraggedObj)
         {
-            Debug.Log("Recycle Object: " + bin.name);
+            Debug.Log("Recycle Object: " + DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text + " in  " + bin.name);
+
+            //Enable anew the corresonding Icon selection
+            GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RectTest>().enabled = true;
+
+            //White back the icon
+            float hue;
+            float sat;
+            float val;
+
+            EditorGUIUtility.RGBToHSV(GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color, out hue, out sat, out val);
+            GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+
+            //Destroy Dragged Object
+            Destroy(DraggedObj);
+
+            //Reset DraggedObj
+            DraggedObj = null;
+        }
+
+        //Activate All Musical Object Collider 
+        SetAllColliderState(true);
+    }
+
+    /**********************************************************************/
+    // Drop Sounds to Recycle All Bin
+    /**********************************************************************/
+    public void RecycleAllSounds()
+    {
+
+        Debug.Log("Recycle All Objects");
+
+        //For each icon - Enable selection and white back
+        foreach (Transform icon in GameObject.Find("Panel").transform)
+        {
+            //Enable anew the corresonding Icon selection
+            icon.GetComponent<RectTest>().enabled = true;
+
+            //White back the icon
+            float hue;
+            float sat;
+            float val;
+
+            EditorGUIUtility.RGBToHSV(icon.GetComponent<RawImage>().color, out hue, out sat, out val);
+            icon.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+        }
+
+        //for each object in Scene Destroy
+        foreach (Transform child in GameObject.Find("SoundsObjGrpInScene").transform)
+            Destroy(child.gameObject);
+
+        if (DraggedObj)
+        {
+           
             //Destroy Dragged Object
             Destroy(DraggedObj);
 

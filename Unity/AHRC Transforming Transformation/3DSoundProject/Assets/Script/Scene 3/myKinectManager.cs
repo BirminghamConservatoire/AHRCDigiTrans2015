@@ -205,7 +205,7 @@ public class myKinectManager : MonoBehaviour
             if (leftHandVolumeCtrl)
             {
                 //Control Volume
-                mySceneManagerScript.ControlObjVolume(mySceneManagerScript.DraggedObj, deltaLeftHandPos.y / 10.0f);
+                mySceneManagerScript.ControlObjVolume(mySceneManagerScript.DraggedObj, deltaLeftHandPos.y / 5.0f);
 
                 //Manage Interface to control volume
                 mySceneManagerScript.ManageVolumeInterface(true, mySceneManagerScript.DraggedObj);
