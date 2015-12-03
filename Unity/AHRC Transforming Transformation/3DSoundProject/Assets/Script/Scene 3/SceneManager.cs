@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System.IO;
 //3DCeption Library
 using TBE_3DCore;
-using UnityEditor;
+//using UnityEditor;
 
 public class SceneManager : MonoBehaviour {
 
@@ -104,16 +104,16 @@ public class SceneManager : MonoBehaviour {
                 {
                     //Highlight the object in contact    
                     float highlight = 1.0f;
-                    EditorGUIUtility.RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
-                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(hue, sat, highlight);
+                    /*EditorGUIUtility.*/RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
                     break;
                 }
                 else
                 {
                     //Highlight the object in contact    
                     float highlight = 0.5f;
-                    EditorGUIUtility.RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
-                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(hue, sat, highlight);
+                    /*EditorGUIUtility.*/RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
                 }
             }
         }
@@ -293,10 +293,10 @@ public class SceneManager : MonoBehaviour {
             volumeInterface.transform.GetChild(0).GetComponent<Slider>().value = DraggedObj.GetComponent<TBE_Source>().volume;
 
             //Change the Color Saturation of Dragged Object
-            EditorGUIUtility.RGBToHSV(obj.GetComponent<Renderer>().material.color,out h,out s, out v);
+            /*EditorGUIUtility.*/RGBToHSV(obj.GetComponent<Renderer>().material.color,out h,out s, out v);
             //Debug.Log(h + "    " + s + "   " + "    " + v);
             s = 0.99f*volumeInterface.transform.GetChild(0).GetComponent<Slider>().value + 0.01f;//Sort of clamping the color - other when reconverting the hue is set to null
-            DraggedObj.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(h, s, v);
+            DraggedObj.GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(h, s, v);
         }
     }
 
@@ -345,8 +345,8 @@ public class SceneManager : MonoBehaviour {
         float sat;
         float val;
 
-        EditorGUIUtility.RGBToHSV(obj.GetComponent<RawImage>().color, out hue, out sat, out val);
-        obj.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 0.5f);
+        /*EditorGUIUtility.*/RGBToHSV(obj.GetComponent<RawImage>().color, out hue, out sat, out val);
+        obj.GetComponent<RawImage>().color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, 0.5f);
   
         /**********************************************************************/
 
@@ -355,7 +355,7 @@ public class SceneManager : MonoBehaviour {
         Sphere.name = "Sound_" + obj.name;
         
         //Set Random color to Sphere - Color is define in HSV 
-        Sphere.GetComponent<Renderer>().material.color = EditorGUIUtility.HSVToRGB(Random.Range(0.0f, 1.0f), 1.0f, 0.5f);
+        Sphere.GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(Random.Range(0.0f, 1.0f), 1.0f, 0.5f);
         //Sphere.GetComponent<Renderer>().material.color = new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
 
         //Edit 3D text mesh
@@ -391,8 +391,8 @@ public class SceneManager : MonoBehaviour {
             float sat;
             float val;
 
-            EditorGUIUtility.RGBToHSV(myLastSelectedIcon.GetComponent<RawImage>().color, out hue, out sat, out val);
-            myLastSelectedIcon.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+            /*EditorGUIUtility.*/RGBToHSV(myLastSelectedIcon.GetComponent<RawImage>().color, out hue, out sat, out val);
+            myLastSelectedIcon.GetComponent<RawImage>().color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, 1.0f);
             
             //Reset Last selected Icon
             myLastSelectedIcon = null;
@@ -542,8 +542,8 @@ public class SceneManager : MonoBehaviour {
             float sat;
             float val;
 
-            EditorGUIUtility.RGBToHSV(GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color, out hue, out sat, out val);
-            GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+            /*EditorGUIUtility.*/RGBToHSV(GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color, out hue, out sat, out val);
+            GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RawImage>().color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, 1.0f);
 
             //Destroy Dragged Object
             Destroy(DraggedObj);
@@ -575,8 +575,8 @@ public class SceneManager : MonoBehaviour {
             float sat;
             float val;
 
-            EditorGUIUtility.RGBToHSV(icon.GetComponent<RawImage>().color, out hue, out sat, out val);
-            icon.GetComponent<RawImage>().color = EditorGUIUtility.HSVToRGB(hue, sat, 1.0f);
+            /*EditorGUIUtility.*/RGBToHSV(icon.GetComponent<RawImage>().color, out hue, out sat, out val);
+            icon.GetComponent<RawImage>().color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, 1.0f);
         }
 
         //for each object in Scene Destroy
@@ -596,4 +596,137 @@ public class SceneManager : MonoBehaviour {
         //Activate All Musical Object Collider 
         SetAllColliderState(true);
     }
+
+
+    /********************************************************************/
+    //Convert color HSV to RGB to HSV
+    /********************************************************************/
+     public static Color HSVToRGB(float H, float S, float V)
+     {
+         if (S == 0f)
+         {
+             return new Color(V,V,V);
+         }
+         else if (V == 0.0f)
+         {
+             Color col = Color.black;
+           return col;
+         }
+         else
+         {
+             Color col = Color.black;
+             float Hval = H * 6f;
+             int sel = Mathf.FloorToInt(Hval);
+             float mod = Hval - sel;
+             float v1 = V * (1f - S);
+             float v2 = V * (1f - S * mod);
+             float v3 = V * (1f - S * (1f - mod));
+             switch (sel + 1)
+             {
+             case 0:
+                 col.r = V;
+                 col.g = v1;
+                 col.b = v2;
+                 break;
+             case 1:
+                 col.r = V;
+                 col.g = v3;
+                 col.b = v1;
+                 break;
+             case 2:
+                 col.r = v2;
+                 col.g = V;
+                 col.b = v1;
+                 break;
+             case 3:
+                 col.r = v1;
+                 col.g = V;
+                 col.b = v3;
+                 break;
+             case 4:
+                 col.r = v1;
+                 col.g = v2;
+                 col.b = V;
+                 break;
+             case 5:
+                 col.r = v3;
+                 col.g = v1;
+                 col.b = V;
+                 break;
+             case 6:
+                 col.r = V;
+                 col.g = v1;
+                 col.b = v2;
+                 break;
+             case 7:
+                 col.r = V;
+                 col.g = v3;
+                 col.b = v1;
+                 break;
+             }
+             col.r = Mathf.Clamp(col.r, 0f, 1f);
+             col.g = Mathf.Clamp(col.g, 0f, 1f);
+             col.b = Mathf.Clamp(col.b, 0f, 1f);
+             return col;
+         }
+     }
+
+     public static void RGBToHSV(Color rgbColor, out float H, out float S, out float V)
+     {
+         if (rgbColor.b > rgbColor.g && rgbColor.b > rgbColor.r)
+         {
+             RGBToHSVHelper(4f, rgbColor.b, rgbColor.r, rgbColor.g, out H, out S, out V);
+         }
+         else
+         {
+             if (rgbColor.g > rgbColor.r)
+             {
+                 RGBToHSVHelper(2f, rgbColor.g, rgbColor.b, rgbColor.r, out H, out S, out V);
+             }
+             else
+             {
+                 RGBToHSVHelper(0f, rgbColor.r, rgbColor.g, rgbColor.b, out H, out S, out V);
+             }
+         }
+     }
+
+     private static void RGBToHSVHelper(float offset, float dominantcolor, float colorone, float colortwo, out float H, out float S, out float V)
+     {
+         V = dominantcolor;
+         if (V != 0f)
+         {
+             float num = 0f;
+             if (colorone > colortwo)
+             {
+                 num = colortwo;
+             }
+             else
+             {
+                 num = colorone;
+             }
+             float num2 = V - num;
+             if (num2 != 0f)
+             {
+                 S = num2 / V;
+                 H = offset + (colorone - colortwo) / num2;
+             }
+             else
+             {
+                 S = 0f;
+                 H = offset + (colorone - colortwo);
+             }
+             H /= 6f;
+             if (H < 0f)
+             {
+                 H += 1f;
+             }
+         }
+         else
+         {
+             S = 0f;
+             H = 0f;
+         }
+     }
+
+
 }
