@@ -38,6 +38,20 @@ public class RectTest : MonoBehaviour {
         {
             //GameObject.Find("DebugTextKinect").GetComponent<Text>().text = "KinectHand on: " + transform.name;
 
+            /*********************************/
+            //Manage the Visibility of the handIcon
+            /*********************************/
+            if (rectTransform.gameObject.tag == "main window")
+            {
+                //Manage the visibility of the hand icon (in front/behind object = visible/hidden)
+                mySceneManagerScript.ManageHandIconVisibility(rectTransform.gameObject, myKinectManagerScript.RightHandObj, myKinectManagerScript.RightHandIcon);
+            }
+
+
+
+            /*********************************/
+            //Manage the state of the handicon
+            /*********************************/
             //If an icon is clicked
             if (myKinectManagerScript.selectionStateMachine == 1 && rectTransform.gameObject.tag == "icon")
             {

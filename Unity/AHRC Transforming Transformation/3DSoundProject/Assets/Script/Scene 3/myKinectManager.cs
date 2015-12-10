@@ -99,6 +99,7 @@ public class myKinectManager : MonoBehaviour
                         {
                             //Debug.Log("Right Hand Open");
                             RightHandIcon.GetComponent<RawImage>().texture = HandFist;
+                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFist;
                             hasBeenSelectedbyHand = true;
 
                             if (prevRightHandOpenState)
@@ -112,6 +113,7 @@ public class myKinectManager : MonoBehaviour
                         {
                             //Debug.Log("Right Hand Closed");
                             RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
+                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFinger;
                             hasBeenSelectedbyHand = false;
                             
                             if (!prevRightHandOpenState)
@@ -131,6 +133,7 @@ public class myKinectManager : MonoBehaviour
                                                         (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
                         deltaRightHandPos = currentRightHandPos - lastRightHandPos;
                         lastRightHandPos = currentRightHandPos;
+
 
                         /************************************************************************************************/
                         //Manage the depth of the KINECT hand in the environment PS: currentRightHandPos is relative to the Kinect
@@ -265,9 +268,7 @@ public class myKinectManager : MonoBehaviour
 
         //Set Icon size as a function of the position in depth of the Sphere
         Icon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, obj.transform.position));
-
-
-    }
+    } 
 
 
     void OnApplicationQuit()

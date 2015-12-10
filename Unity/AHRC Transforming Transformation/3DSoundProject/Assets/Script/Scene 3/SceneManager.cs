@@ -237,13 +237,13 @@ public class SceneManager : MonoBehaviour {
     /************************************************************************************************************/
     // Generic Public Function
     /************************************************************************************************************/
-    public //Set State of collider of Musical Objects
-    void SetAllColliderState(bool state)
+     //Set State of collider of Musical Objects
+    /*publicvoid SetAllColliderState(bool state)
     {
-        //Debug.Log("collider state is " + state);
-        for (int i = 0; i < MusicObjGroup.transform.childCount; i++)
-            MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
-    }
+       //Debug.Log("collider state is " + state);
+       for (int i = 0; i < MusicObjGroup.transform.childCount; i++)
+          MusicObjGroup.transform.GetChild(i).GetComponent<Collider>().enabled = state;
+    }*/
 
     //Control Object in 3D environment
     public void ControlSoundObj(GameObject obj, Vector3 myInput)
@@ -261,8 +261,8 @@ public class SceneManager : MonoBehaviour {
         Ray rayPerspective = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
         //Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 10, Color.green);
 
-        Vector3 vec = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + myKinectManagerScript.distance));
-        
+        Vector3 vec = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportToWorldPoint(new Vector3(p.x, p.y, GameObject.Find("Scene Camera").transform.GetComponent<Camera>().nearClipPlane + GameObject.Find("Floor").transform.lossyScale.z * 10 / 2 + myKinectManagerScript.distance + SpherePattern.transform.lossyScale.z/2+ 0.05f)); // 0.05f: We add a tiny offset so that hand is in front of the text (nicer)
+
         //Clamp vec position
         vec = new Vector3(Mathf.Clamp(vec.x, GameObject.Find("Left").transform.position.x + obj.transform.lossyScale.x / 2, GameObject.Find("Right").transform.position.x - obj.transform.lossyScale.x / 2),
                           Mathf.Clamp(vec.y, GameObject.Find("Floor").transform.position.y + obj.transform.lossyScale.y / 2, GameObject.Find("Ceiling").transform.position.y - obj.transform.lossyScale.y / 2),
@@ -319,6 +319,43 @@ public class SceneManager : MonoBehaviour {
     }
     /************************************************************************************************************/
     /**********************************************************************/
+    // Manage Hand Icon Visibility
+    /**********************************************************************/
+    public void ManageHandIconVisibility(GameObject myPanel, GameObject handObj, GameObject handIcon)
+    {
+        //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
+        Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (handIcon.GetComponent<RectTransform>().position.x - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().rect.width,
+                                (myPanel.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (handIcon.GetComponent<RectTransform>().position.y - myPanel.GetComponent<RectTransform>().position.y) / myPanel.GetComponent<RectTransform>().rect.height);
+
+        //Clamp the value of p
+        p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
+        p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
+
+        //Projection from main Camera (Viewport) to Perspective Camera
+        Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));//Returns a ray going from camera through a viewport point.
+        Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 100, Color.blue);
+
+        //Raycast test on sound object
+        //If icon is in front of object - icon should be visible/If icon is in front of object - icon should be hidden
+        RaycastHit hit;
+        if (Physics.SphereCast(rayPerspective, 0.25f, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) - handObj.transform.localScale.z))
+        {
+            //Only if hit object is a musical object
+            if (hit.collider.gameObject.layer == 8)
+            {
+                handIcon.GetComponent<RawImage>().enabled = false;
+                Debug.Log(hit.collider.name);
+            }
+            else
+                handIcon.GetComponent<RawImage>().enabled = true;
+        }
+        else
+            handIcon.GetComponent<RawImage>().enabled = true;
+    }
+
+
+    /************************************************************************************************************/
+    /**********************************************************************/
     // Select/Release for Dragging Sound into Scene from control Panel
     /**********************************************************************/
     private GameObject myLastSelectedIcon;
@@ -362,7 +399,7 @@ public class SceneManager : MonoBehaviour {
         Sphere.transform.GetChild(0).GetComponent<TextMesh>().text = obj.name;
 
         //Inactivate All Musical Object Collider - So we can place two sound at the same place
-        SetAllColliderState(false);
+        //SetAllColliderState(false);
     }
 
     public void OnUpObj(GameObject obj, Vector3 myInput)
@@ -376,7 +413,7 @@ public class SceneManager : MonoBehaviour {
         /**********************************************************************/
         //Activate All Musical Object Collider
         /**********************************************************************/
-        SetAllColliderState(true);
+        //SetAllColliderState(true);
         /**********************************************************************/
 
         //If the cursor is outside the mainGraphicPanel when button is up, the sphere is destroyed
@@ -464,7 +501,6 @@ public class SceneManager : MonoBehaviour {
         }
     }
 
-
     /**********************************************************************/
     // Select/Release forMoving Sound in Scene
     /**********************************************************************/
@@ -486,12 +522,16 @@ public class SceneManager : MonoBehaviour {
 
         //Raycast test on sound object
         RaycastHit hit;
-        if (Physics.Raycast(rayPerspective, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) + 0.5f))
+
+        //TO BE CORRECTED - ONLY FOR DEBUG PURPOSE
+        //if (Physics.Raycast(rayPerspective, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) + handObj.transform.localScale.z))
+        if (Physics.Raycast(rayPerspective, out hit, GameObject.Find("Floor").transform.lossyScale.z * 10))// we want to able to grasp the object anytime the handicon is located in front of it - for a more antural interaction
         {
             //Only if hit object is a musical object
             if (hit.collider.gameObject.layer == 8)
             {
-                if (hit.distance > Vector3.Distance(rayPerspective.origin, handObj.transform.position) - 0.6f)
+
+                //if (hit.distance > Vector3.Distance(rayPerspective.origin, handObj.transform.position) - 0.6f)
                 {
                     DraggedObj = hit.collider.gameObject;
                     //Debug.Log("Selected Sound Object: " + DraggedObj.name);
@@ -500,7 +540,7 @@ public class SceneManager : MonoBehaviour {
                     DraggedObj.GetComponent<Collider>().enabled = false;
 
                     //Inactivate All Musical Object Collider - So we can place two sound at the same place
-                    SetAllColliderState(false);
+                    //SetAllColliderState(false);
                 }
             }
         }
@@ -521,7 +561,7 @@ public class SceneManager : MonoBehaviour {
         }
 
         //Activate All Musical Object Collider 
-        SetAllColliderState(true);
+        //SetAllColliderState(true);
     }
 
     /**********************************************************************/
@@ -534,7 +574,7 @@ public class SceneManager : MonoBehaviour {
         {
             Debug.Log("Recycle Object: " + DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text + " in  " + bin.name);
 
-            //Enable anew the corresonding Icon selection
+            //Enable anew the corresponding Icon selection
             GameObject.Find(DraggedObj.transform.GetChild(0).GetComponent<TextMesh>().text).GetComponent<RectTest>().enabled = true;
 
             //White back the icon
@@ -553,7 +593,7 @@ public class SceneManager : MonoBehaviour {
         }
 
         //Activate All Musical Object Collider 
-        SetAllColliderState(true);
+        //SetAllColliderState(true);
     }
 
     /**********************************************************************/
@@ -594,7 +634,7 @@ public class SceneManager : MonoBehaviour {
         }
 
         //Activate All Musical Object Collider 
-        SetAllColliderState(true);
+        //SetAllColliderState(true);
     }
 
 
