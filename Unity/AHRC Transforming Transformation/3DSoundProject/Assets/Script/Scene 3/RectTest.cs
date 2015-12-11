@@ -71,7 +71,7 @@ public class RectTest : MonoBehaviour {
 
                 //check for object selection
                 mySceneManagerScript.SelectSoundObj(rectTransform.gameObject, myKinectManagerScript.RightHandObj, myKinectManagerScript.RightHandIcon);
-                
+
                 //Reset the state machine
                 myKinectManagerScript.selectionStateMachine = 0.0f;
             }

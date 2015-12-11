@@ -22,6 +22,7 @@ public class myKinectManager : MonoBehaviour
     public GameObject RightHandObj;
     public GameObject RightHandIcon;
 
+    public Texture HandFull;
     public Texture HandFinger;
     public Texture HandFist;
 
@@ -97,7 +98,6 @@ public class myKinectManager : MonoBehaviour
                         //Manage Cursor state
                         if (_Data[idx].HandRightState == HandState.Closed)
                         {
-                            //Debug.Log("Right Hand Open");
                             RightHandIcon.GetComponent<RawImage>().texture = HandFist;
                             RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFist;
                             hasBeenSelectedbyHand = true;
@@ -109,11 +109,16 @@ public class myKinectManager : MonoBehaviour
 
                             prevRightHandOpenState = false;
                         }
-                        if (_Data[idx].HandRightState == HandState.Open || _Data[idx].HandRightState == HandState.Lasso)
+                        if ( _Data[idx].HandRightState == HandState.Lasso)
                         {
-                            //Debug.Log("Right Hand Closed");
                             RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
                             RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFinger;
+                        }
+
+                        if (_Data[idx].HandRightState == HandState.Open)
+                        {
+                            RightHandIcon.GetComponent<RawImage>().texture = HandFull;
+                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFull;
                             hasBeenSelectedbyHand = false;
                             
                             if (!prevRightHandOpenState)
@@ -240,6 +245,7 @@ public class myKinectManager : MonoBehaviour
 
         //Projection of the icon position from Screen into the Real world as hand object
         ControlObjWithKinect(projectedIcon, obj);
+
     }
 
     public void ControlObjWithKinect( GameObject Icon, GameObject obj)
@@ -265,6 +271,19 @@ public class myKinectManager : MonoBehaviour
                           Mathf.Clamp(vec.z, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2));
 
         obj.transform.position = vec;
+
+        /*****************************************************************************************************************************************************/
+        //When the hand obj is on boundary of the VE - the hand icon and hand object will be detached (no more superposition) - The hand object is thus darkened
+        /*****************************************************************************************************************************************************/
+
+        if (vec.x == GameObject.Find("Left").transform.position.x + obj.transform.lossyScale.x / 2 || vec.x == GameObject.Find("Right").transform.position.x - obj.transform.lossyScale.x / 2
+        || vec.y == GameObject.Find("Floor").transform.position.y + obj.transform.lossyScale.y / 2 || vec.y == GameObject.Find("Ceiling").transform.position.y - obj.transform.lossyScale.y / 2
+        || vec.z == GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2 || vec.z == GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2)
+            RightHandObj.GetComponent<Light>().enabled = false;
+        else
+            RightHandObj.GetComponent<Light>().enabled = true;
+
+        /*****************************************************************************************************************************************************/
 
         //Set Icon size as a function of the position in depth of the Sphere
         Icon.GetComponent<RectTransform>().localScale = new Vector3(1.0f, 1.0f, 1.0f) * (Vector3.Distance(GameObject.Find("Scene Camera").transform.position, GameObject.Find("Back").transform.position)) / (2 * Vector3.Distance(GameObject.Find("Scene Camera").transform.position, obj.transform.position));

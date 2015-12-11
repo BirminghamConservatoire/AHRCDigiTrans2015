@@ -250,12 +250,10 @@ public class SceneManager : MonoBehaviour {
     {
         //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
         Vector2 p = new Vector2((mainGraphicWindow.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (myInput.x - mainGraphicWindow.GetComponent<RectTransform>().position.x) / mainGraphicWindow.GetComponent<RectTransform>().rect.width,
-                                (mainGraphicWindow.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (myInput.y - mainGraphicWindow.GetComponent<RectTransform>().position.y) / mainGraphicWindow.GetComponent<RectTransform>().rect.height);
-        
+                                (mainGraphicWindow.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (myInput.y - mainGraphicWindow.GetComponent<RectTransform>().position.y) / mainGraphicWindow.GetComponent<RectTransform>().rect.height);  
         //Clamp the value of p
         p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
         p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
-
 
         //For Kinect Manipulation we project from an orthoCamera 
         Ray rayPerspective = GameObject.Find("OrthoCamera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));
@@ -269,6 +267,7 @@ public class SceneManager : MonoBehaviour {
                           Mathf.Clamp(vec.z, GameObject.Find("Front").transform.position.z + obj.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - obj.transform.lossyScale.z / 2));
 
         obj.transform.position = vec;
+
     }
 
     //Control Volume of the Dragged Object - as a function of left hand position
@@ -524,8 +523,8 @@ public class SceneManager : MonoBehaviour {
         RaycastHit hit;
 
         //TO BE CORRECTED - ONLY FOR DEBUG PURPOSE
-        //if (Physics.Raycast(rayPerspective, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) + handObj.transform.localScale.z))
-        if (Physics.Raycast(rayPerspective, out hit, GameObject.Find("Floor").transform.lossyScale.z * 10))// we want to able to grasp the object anytime the handicon is located in front of it - for a more antural interaction
+        if (Physics.Raycast(rayPerspective, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) + handObj.transform.localScale.z))
+        //if (Physics.Raycast(rayPerspective, out hit, GameObject.Find("Floor").transform.lossyScale.z * 10))// we want to able to grasp the object anytime the handicon is located in front of it - for a more antural interaction
         {
             //Only if hit object is a musical object
             if (hit.collider.gameObject.layer == 8)
