@@ -45,6 +45,9 @@ public class myKinectManager : MonoBehaviour
     private Vector3 lastLeftHandPos;
     private Vector3 deltaLeftHandPos;
 
+    public bool previousFingerHandUpState = false;
+    public bool createNewPath = false;
+
     void Start()
     {
 
@@ -96,6 +99,10 @@ public class myKinectManager : MonoBehaviour
                     if (_Data[idx].HandRightState != HandState.NotTracked)
                     {
                         //Manage Cursor state
+
+                        /********************************************************/
+                        //Hand Closed
+                        /********************************************************/
                         if (_Data[idx].HandRightState == HandState.Closed)
                         {
                             RightHandIcon.GetComponent<RawImage>().texture = HandFist;
@@ -108,13 +115,36 @@ public class myKinectManager : MonoBehaviour
                                 selectionStateMachine = 0;//No change
 
                             prevRightHandOpenState = false;
+
+                            //Reset finger State
+                            previousFingerHandUpState = false;
+                            GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
                         }
+
+                        /********************************************************/
+                        //Only one finger up
+                        /********************************************************/
                         if ( _Data[idx].HandRightState == HandState.Lasso)
                         {
                             RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
                             RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFinger;
+
+                            //Check previous state of finger - if it is the first time we have the finger up
+                            if (!previousFingerHandUpState)
+                            {
+                                //Set parameters to create new Path
+                                createNewPath = true;
+                                previousFingerHandUpState = true;
+
+                                GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = true;
+                            }
+                            else
+                                createNewPath = false;
                         }
 
+                        /********************************************************/
+                        //Hand fully opened
+                        /********************************************************/
                         if (_Data[idx].HandRightState == HandState.Open)
                         {
                             RightHandIcon.GetComponent<RawImage>().texture = HandFull;
@@ -127,6 +157,10 @@ public class myKinectManager : MonoBehaviour
                                 selectionStateMachine = 0;//No change
 
                             prevRightHandOpenState = true;
+
+                            //Reset finger State
+                            previousFingerHandUpState = false;
+                            GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
                         }
 
                         //Debug.Log("State Machine " + selectionStateMachine);
@@ -159,6 +193,10 @@ public class myKinectManager : MonoBehaviour
                                                         (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
                         deltaRightHandPos = new Vector3(0.0f,0.0f,0.0f);
                         lastRightHandPos = currentRightHandPos;
+
+                        //Reset finger State
+                        previousFingerHandUpState = false;
+                        GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
                     }
 
 

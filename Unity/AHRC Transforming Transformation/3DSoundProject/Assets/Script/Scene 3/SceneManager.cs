@@ -340,7 +340,7 @@ public class SceneManager : MonoBehaviour {
         if (Physics.SphereCast(rayPerspective, 0.25f, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) - handObj.transform.localScale.z))
         {
             //Only if hit object is a musical object
-            if (hit.collider.gameObject.layer == 8)
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("VRWigdets"))
             {
                 handIcon.GetComponent<RawImage>().enabled = false;
                 Debug.Log(hit.collider.name);
@@ -439,7 +439,7 @@ public class SceneManager : MonoBehaviour {
             Sphere.transform.parent = MusicObjGroup.transform;
 
             //Assign to Layer
-            Sphere.layer = 8;
+            Sphere.layer = LayerMask.NameToLayer("VRWigdets");
 
             //Activate Object collider
             Sphere.GetComponent<Collider>().enabled = true;
@@ -527,7 +527,7 @@ public class SceneManager : MonoBehaviour {
         //if (Physics.Raycast(rayPerspective, out hit, GameObject.Find("Floor").transform.lossyScale.z * 10))// we want to able to grasp the object anytime the handicon is located in front of it - for a more antural interaction
         {
             //Only if hit object is a musical object
-            if (hit.collider.gameObject.layer == 8)
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("VRWigdets"))
             {
 
                 //if (hit.distance > Vector3.Distance(rayPerspective.origin, handObj.transform.position) - 0.6f)
@@ -630,6 +630,15 @@ public class SceneManager : MonoBehaviour {
 
             //Reset DraggedObj
             DraggedObj = null;
+        }
+
+        //Recycle all trajectory
+        foreach (Transform child in transform)
+        {
+            if (child.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
+            {
+                Destroy(child.gameObject);
+            }
         }
 
         //Activate All Musical Object Collider 
