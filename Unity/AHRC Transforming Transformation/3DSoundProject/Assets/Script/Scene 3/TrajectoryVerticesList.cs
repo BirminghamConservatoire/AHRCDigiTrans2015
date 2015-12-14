@@ -2,14 +2,16 @@
 using System.Collections;
 using System; //This allows the IComparable Interface
 
-//This is a list of Empty GameObject that serve as vertices of the trajectory 
-public class TrajectoryVerticesList 
+public class TrajectoryVerticesList
+{
+    public int Id;
+    public Vector3 pos;
+    public SphereCollider sc;
+
+    public TrajectoryVerticesList(int newId, Vector3 newPos, SphereCollider newSc)
     {
-        public Vector3 pos;
-
-        public TrajectoryVerticesList(Vector3 newPos)
-        {
-            pos = newPos;
-        }
+        Id = newId;
+        pos = newPos;
+        sc = newSc;
     }
-
+}

@@ -75,6 +75,7 @@ public class RectTest : MonoBehaviour {
                 //Reset the state machine
                 myKinectManagerScript.selectionStateMachine = 0.0f;
             }
+
             //If Hand state from open to close -> TrashAll Items
             if (myKinectManagerScript.selectionStateMachine == 1 && rectTransform.gameObject.tag == "trashAll")
             {

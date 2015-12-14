@@ -292,7 +292,7 @@ public class Manage3DSounds : MonoBehaviour
                 //Debug.Log("Selected Sound Object: " + DraggedObj.name);
 
                 //Deactivate Collider
-                DraggedObj.GetComponent<Collider>().enabled = false;
+                //DraggedObj.GetComponent<Collider>().enabled = false;
             }
         }
         
@@ -309,7 +309,7 @@ public class Manage3DSounds : MonoBehaviour
                 if (DraggedObj)
                 {
                     //Reset collider
-                    DraggedObj.GetComponent<Collider>().enabled = true;
+                    //DraggedObj.GetComponent<Collider>().enabled = true;
 
                     //Reset Dragged Obj
                     DraggedObj = null;

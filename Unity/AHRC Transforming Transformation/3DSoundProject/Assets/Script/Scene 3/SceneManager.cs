@@ -86,6 +86,8 @@ public class SceneManager : MonoBehaviour {
 
     }
 
+
+
     void LateUpdate()
     {
         float hue;
@@ -100,21 +102,29 @@ public class SceneManager : MonoBehaviour {
                 //Compare location distance
                 float howFar = Vector3.Distance(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).position, GameObject.Find("SoundsObjGrpInScene").transform.GetChild(j).position);
 
-                if (howFar > 0.0f && howFar < SpherePattern.transform.lossyScale.z)
+                TestTrajectoryWithObj mycollisionTestOfTrajectoryWithObj = GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
+
+                if (!mycollisionTestOfTrajectoryWithObj.HighlightObjWithTrajectory)
                 {
-                    //Highlight the object in contact    
-                    float highlight = 1.0f;
-                    /*EditorGUIUtility.*/RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
-                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
-                    break;
+                    if (howFar > 0.0f && howFar < SpherePattern.transform.lossyScale.z)
+                    {
+                        //Highlight the object in contact    
+                        float highlight = 1.0f;
+                        /*EditorGUIUtility.*/
+                        RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                        GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
+                        break;
+                    }
+                    else
+                    {
+                        //Highlight the object in contact    
+                        float highlight = 0.5f;
+                        /*EditorGUIUtility.*/
+                        RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
+                        GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
+                    }
                 }
-                else
-                {
-                    //Highlight the object in contact    
-                    float highlight = 0.5f;
-                    /*EditorGUIUtility.*/RGBToHSV(GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color, out hue, out sat, out val);
-                    GameObject.Find("SoundsObjGrpInScene").transform.GetChild(i).GetComponent<Renderer>().material.color = /*EditorGUIUtility.*/HSVToRGB(hue, sat, highlight);
-                }
+
             }
         }
     }
@@ -340,10 +350,10 @@ public class SceneManager : MonoBehaviour {
         if (Physics.SphereCast(rayPerspective, 0.25f, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) - handObj.transform.localScale.z))
         {
             //Only if hit object is a musical object
-            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("VRWigdets"))
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
             {
                 handIcon.GetComponent<RawImage>().enabled = false;
-                Debug.Log(hit.collider.name);
+                //Debug.Log(hit.collider.name);
             }
             else
                 handIcon.GetComponent<RawImage>().enabled = true;
@@ -399,6 +409,19 @@ public class SceneManager : MonoBehaviour {
 
         //Inactivate All Musical Object Collider - So we can place two sound at the same place
         //SetAllColliderState(false);
+
+
+        /***********************************************************************************************************************************/
+        //Reset the previous in case the object has been on a trajectory previously
+        /***********************************************************************************************************************************/
+        TestTrajectoryWithObj myTestOnTrajectory = Sphere.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
+        /*//Reset dumbly previous Path
+        myTestOnTrajectory.previousPath = null;
+        //Clear the List of node
+        myTestOnTrajectory.myList.Clear();*/
+        myTestOnTrajectory.currentPath = null;
+        myTestOnTrajectory.releaseOnTrajectory = false;
+        /***********************************************************************************************************************************/
     }
 
     public void OnUpObj(GameObject obj, Vector3 myInput)
@@ -439,7 +462,7 @@ public class SceneManager : MonoBehaviour {
             Sphere.transform.parent = MusicObjGroup.transform;
 
             //Assign to Layer
-            Sphere.layer = LayerMask.NameToLayer("VRWigdets");
+            Sphere.layer = LayerMask.NameToLayer("SoundObject");
 
             //Activate Object collider
             Sphere.GetComponent<Collider>().enabled = true;
@@ -462,11 +485,29 @@ public class SceneManager : MonoBehaviour {
                 }
             }
 
+            /***********************************************************************************************************************************/
+            //set the position of the object when dropped on a path (trajectory)
+            /***********************************************************************************************************************************/
+            TestTrajectoryWithObj myTestOnTrajectory = Sphere.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
+
+            //if the object is on a trajectory
+            if (myTestOnTrajectory.HighlightObjWithTrajectory)
+            {
+                //Refine the position of the object on the trajectory
+                GameObject myObjOnTrajectory =  Sphere;
+                myObjOnTrajectory.transform.position = myTestOnTrajectory.closestStartPos;
+                //Debug.Log(myTestOnTrajectory.closestStartPos.x + "  " + myTestOnTrajectory.closestStartPos.y + "  " + "  " + myTestOnTrajectory.closestStartPos.z);
+                Debug.Log(myTestOnTrajectory.currentPath);
+                myTestOnTrajectory.releaseOnTrajectory = true;
+            }
+            /***********************************************************************************************************************************/
+
             //Disable the selection of the Icon
             myLastSelectedIcon.GetComponent<RectTest>().enabled = false;
 
             //Reset Last selected Icon
             myLastSelectedIcon = null;
+
         }
     }
 
@@ -527,7 +568,7 @@ public class SceneManager : MonoBehaviour {
         //if (Physics.Raycast(rayPerspective, out hit, GameObject.Find("Floor").transform.lossyScale.z * 10))// we want to able to grasp the object anytime the handicon is located in front of it - for a more antural interaction
         {
             //Only if hit object is a musical object
-            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("VRWigdets"))
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject"))
             {
 
                 //if (hit.distance > Vector3.Distance(rayPerspective.origin, handObj.transform.position) - 0.6f)
@@ -535,25 +576,59 @@ public class SceneManager : MonoBehaviour {
                     DraggedObj = hit.collider.gameObject;
                     //Debug.Log("Selected Sound Object: " + DraggedObj.name);
 
-                    //Deactivate Collider
-                    DraggedObj.GetComponent<Collider>().enabled = false;
+                    //Deactivate Collider - commented on 14/12/15 because collider is needed for the trajectory line detection
+                    //DraggedObj.GetComponent<Collider>().enabled = false;
 
                     //Inactivate All Musical Object Collider - So we can place two sound at the same place
                     //SetAllColliderState(false);
+
+                    /***********************************************************************************************************************************/
+                    //Reset the previous in case the object has been on a trajectory previously
+                    /***********************************************************************************************************************************/
+                    TestTrajectoryWithObj myTestOnTrajectory = DraggedObj.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
+                    //Reset dumbly previous Path
+                    myTestOnTrajectory.previousPath = null;
+                    myTestOnTrajectory.currentPath = null;
+                    //Debug.Log("Current Path is " + myTestOnTrajectory.currentPath);
+                    myTestOnTrajectory.releaseOnTrajectory = false;
+                    //ClearList of nodes of trajectory
+                    myTestOnTrajectory.myList.Clear();
+                    /***********************************************************************************************************************************/
                 }
             }
         }
+
     }
+
+
 
     public void ReleaseSoundObj(GameObject myPanel)
     {
-        
+
         if (DraggedObj)
         {
             //Debug.Log("Release: " + DraggedObj);
-            
-            //Reset collider
-            DraggedObj.GetComponent<Collider>().enabled = true;
+
+            //Reset collider - commented on 14/12/15 because collider is needed for the trajectory line detection
+            //DraggedObj.GetComponent<Collider>().enabled = true;
+
+            /***********************************************************************************************************************************/
+            //set the position of the object when dropped on a path (trajectory)
+            /***********************************************************************************************************************************/
+            TestTrajectoryWithObj myTestOnTrajectory = DraggedObj.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
+
+            //if the object is on a trajectory
+            if (myTestOnTrajectory.HighlightObjWithTrajectory)
+            {
+                //Refine the position of the object on the trajectory
+                GameObject myObjOnTrajectory = DraggedObj;
+                myObjOnTrajectory.transform.position = myTestOnTrajectory.closestStartPos;
+                //Debug.Log(myTestOnTrajectory.closestStartPos.x + "  " + myTestOnTrajectory.closestStartPos.y + "  " + "  " + myTestOnTrajectory.closestStartPos.z);
+                Debug.Log(myTestOnTrajectory.currentPath);
+                myTestOnTrajectory.releaseOnTrajectory = true;
+            }
+            /**************************************************************************************************************************************/
+
 
             //Reset Dragged Obj
             DraggedObj = null;
@@ -649,7 +724,7 @@ public class SceneManager : MonoBehaviour {
     /********************************************************************/
     //Convert color HSV to RGB to HSV
     /********************************************************************/
-     public static Color HSVToRGB(float H, float S, float V)
+     public /*static*/ Color HSVToRGB(float H, float S, float V)
      {
          if (S == 0f)
          {
@@ -719,7 +794,7 @@ public class SceneManager : MonoBehaviour {
          }
      }
 
-     public static void RGBToHSV(Color rgbColor, out float H, out float S, out float V)
+     public /*static*/ void RGBToHSV(Color rgbColor, out float H, out float S, out float V)
      {
          if (rgbColor.b > rgbColor.g && rgbColor.b > rgbColor.r)
          {
