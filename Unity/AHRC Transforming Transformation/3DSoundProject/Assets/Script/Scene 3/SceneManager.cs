@@ -8,6 +8,11 @@ using TBE_3DCore;
 
 public class SceneManager : MonoBehaviour {
 
+    //Call OSC functions
+	public bool isXOSC = true;
+    public UniOSC.UniOSCEventDispatcherButton rightHandVibrationEvent;
+	//public UniOSC.UniOSCEventDispatcherButton leftHandVibrationEvent;
+	public UniOSC.UniOSCEventDispatcherSlider leftHandVibrationEvent;
 
     public GameObject mainGraphicWindow;
     public GameObject controlPanel;
@@ -30,7 +35,9 @@ public class SceneManager : MonoBehaviour {
 
     private myKinectManager myKinectManagerScript;
 
-    public GameObject volumeInterface; 
+    public GameObject volumeInterface;
+
+    private PathCreator myPathCreatorScript;
 
     /************************************************************************************************************/
 	// Use this for initialization
@@ -46,7 +53,10 @@ public class SceneManager : MonoBehaviour {
         LoadAudioSamples();
 
         myKinectManagerScript = GameObject.Find("SceneObjects").GetComponent<myKinectManager>();
-	}
+
+        myPathCreatorScript = GameObject.Find("SceneObjects").GetComponent<PathCreator>();
+
+    }
 
 
     void FixedUpdate()
@@ -327,40 +337,99 @@ public class SceneManager : MonoBehaviour {
             dragIcon.transform.position = new Vector3(myInput.x, myInput.y, 0.0f);
     }
     /************************************************************************************************************/
-    /**********************************************************************/
-    // Manage Hand Icon Visibility
-    /**********************************************************************/
-    public void ManageHandIconVisibility(GameObject myPanel, GameObject handObj, GameObject handIcon)
-    {
-        //Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
-        Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (handIcon.GetComponent<RectTransform>().position.x - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().rect.width,
-                                (myPanel.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (handIcon.GetComponent<RectTransform>().position.y - myPanel.GetComponent<RectTransform>().position.y) / myPanel.GetComponent<RectTransform>().rect.height);
-
-        //Clamp the value of p
-        p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
-        p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
-
-        //Projection from main Camera (Viewport) to Perspective Camera
-        Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));//Returns a ray going from camera through a viewport point.
-        Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 100, Color.blue);
-
-        //Raycast test on sound object
-        //If icon is in front of object - icon should be visible/If icon is in front of object - icon should be hidden
-        RaycastHit hit;
-        if (Physics.SphereCast(rayPerspective, 0.25f, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) - handObj.transform.localScale.z))
-        {
-            //Only if hit object is a musical object
-            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
-            {
-                handIcon.GetComponent<RawImage>().enabled = false;
-                //Debug.Log(hit.collider.name);
-            }
-            else
-                handIcon.GetComponent<RawImage>().enabled = true;
-        }
-        else
-            handIcon.GetComponent<RawImage>().enabled = true;
-    }
+	/**********************************************************************/
+	// Manage Hand Icon Visibility
+	/**********************************************************************/
+	public void ManageHandIconVisibility(GameObject myPanel, GameObject handObj, GameObject handIcon)
+	{
+		//Projection from RT to Viewport - p return a coordinates float values for x and y between 0 and 1
+		Vector2 p = new Vector2((myPanel.transform.parent.GetComponent<RectTransform>().rect.width / Screen.width) * (handIcon.GetComponent<RectTransform>().position.x - myPanel.GetComponent<RectTransform>().position.x) / myPanel.GetComponent<RectTransform>().rect.width,
+		                        (myPanel.transform.parent.GetComponent<RectTransform>().rect.height / Screen.height) * (handIcon.GetComponent<RectTransform>().position.y - myPanel.GetComponent<RectTransform>().position.y) / myPanel.GetComponent<RectTransform>().rect.height);
+		
+		//Clamp the value of p
+		p.x = Mathf.Clamp(p.x, 0.0f, 1.0f);
+		p.y = Mathf.Clamp(p.y, 0.0f, 1.0f);
+		
+		//Projection from main Camera (Viewport) to Perspective Camera
+		Ray rayPerspective = GameObject.Find("Scene Camera").GetComponent<Camera>().ViewportPointToRay(new Vector3(p.x, p.y, 0.0f));//Returns a ray going from camera through a viewport point.
+		//Debug.DrawRay(rayPerspective.origin, rayPerspective.direction * 100, Color.blue);
+		
+		//Raycast test on sound object
+		//If icon is in front of object - icon should be visible/If icon is in front of object - icon should be hidden
+		RaycastHit hit;
+		if (Physics.SphereCast(rayPerspective, 0.25f, out hit, Vector3.Distance(rayPerspective.origin, handObj.transform.position) - handObj.transform.localScale.z))
+		{
+			
+			if (hit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject") || hit.collider.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
+			{
+				handIcon.GetComponent<RawImage>().enabled = false;
+				//Debug.Log(hit.collider.name);
+				
+				//New raycast for the hand in contact with the sound object object
+				RaycastHit myHit;
+				//Debug.DrawRay(handObj.transform.position, -1 * rayPerspective.direction, Color.red);
+				if (Physics.Raycast(handObj.transform.position, -1.0f * rayPerspective.direction, out myHit, handObj.transform.localScale.z))
+				{
+					if (myHit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject"))
+					{
+						//Debug.Log(myHit.collider.gameObject.name);
+						
+						//Send OSC Message at to activate vibrator
+						if (isXOSC)
+							rightHandVibrationEvent.SendOSCMessageDown();
+					}
+					else
+					{
+						//Send OSC Message at to activate vibrator
+						if (isXOSC)
+							rightHandVibrationEvent.SendOSCMessageUp();
+					}
+				}
+				
+			}
+			else
+			{
+				handIcon.GetComponent<RawImage>().enabled = true;
+				
+				//Send OSC Message at to activate vibrator
+				if (isXOSC)
+					rightHandVibrationEvent.SendOSCMessageUp();
+			}
+		}
+		else
+		{
+			//Hand in front of the object
+			handIcon.GetComponent<RawImage>().enabled = true;
+			
+			//New raycast for the hand in contact with the sound object object
+			RaycastHit myHit;
+			//Debug.DrawRay(handObj.transform.position, rayPerspective.direction, Color.red);
+			if (Physics.Raycast(handObj.transform.position, rayPerspective.direction, out myHit, handObj.transform.localScale.z))
+			{
+				if (myHit.collider.gameObject.layer == LayerMask.NameToLayer("SoundObject"))
+				{
+					//Debug.Log(myHit.collider.gameObject.name);
+					
+					//Send OSC Message at to activate vibrator
+					if (isXOSC)
+						rightHandVibrationEvent.SendOSCMessageDown();
+				}
+				else
+				{
+					//Send OSC Message at to activate vibrator
+					if (isXOSC)
+						rightHandVibrationEvent.SendOSCMessageUp();
+				}
+				
+			}
+			else
+			{
+				//Send OSC Message at to activate vibrator
+				if (isXOSC)
+					rightHandVibrationEvent.SendOSCMessageUp();
+			}
+		}
+	}
 
 
     /************************************************************************************************************/
@@ -415,10 +484,6 @@ public class SceneManager : MonoBehaviour {
         //Reset the previous in case the object has been on a trajectory previously
         /***********************************************************************************************************************************/
         TestTrajectoryWithObj myTestOnTrajectory = Sphere.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
-        /*//Reset dumbly previous Path
-        myTestOnTrajectory.previousPath = null;
-        //Clear the List of node
-        myTestOnTrajectory.myList.Clear();*/
         myTestOnTrajectory.currentPath = null;
         myTestOnTrajectory.releaseOnTrajectory = false;
         /***********************************************************************************************************************************/
@@ -495,9 +560,10 @@ public class SceneManager : MonoBehaviour {
             {
                 //Refine the position of the object on the trajectory
                 GameObject myObjOnTrajectory =  Sphere;
+                //Set the position of sound object on the path trajectory
                 myObjOnTrajectory.transform.position = myTestOnTrajectory.closestStartPos;
                 //Debug.Log(myTestOnTrajectory.closestStartPos.x + "  " + myTestOnTrajectory.closestStartPos.y + "  " + "  " + myTestOnTrajectory.closestStartPos.z);
-                Debug.Log(myTestOnTrajectory.currentPath);
+                //Debug.Log(myTestOnTrajectory.currentPath);
                 myTestOnTrajectory.releaseOnTrajectory = true;
             }
             /***********************************************************************************************************************************/
@@ -542,7 +608,7 @@ public class SceneManager : MonoBehaviour {
     }
 
     /**********************************************************************/
-    // Select/Release forMoving Sound in Scene
+    // Select/Release forMoving Sound inside Scene
     /**********************************************************************/
     public void SelectSoundObj(GameObject myPanel, GameObject handObj, GameObject handIcon)
     {
@@ -586,8 +652,6 @@ public class SceneManager : MonoBehaviour {
                     //Reset the previous in case the object has been on a trajectory previously
                     /***********************************************************************************************************************************/
                     TestTrajectoryWithObj myTestOnTrajectory = DraggedObj.transform.FindChild("CentralCollider").GetComponent<TestTrajectoryWithObj>();
-                    //Reset dumbly previous Path
-                    myTestOnTrajectory.previousPath = null;
                     myTestOnTrajectory.currentPath = null;
                     //Debug.Log("Current Path is " + myTestOnTrajectory.currentPath);
                     myTestOnTrajectory.releaseOnTrajectory = false;
@@ -599,7 +663,6 @@ public class SceneManager : MonoBehaviour {
         }
 
     }
-
 
 
     public void ReleaseSoundObj(GameObject myPanel)
@@ -622,9 +685,10 @@ public class SceneManager : MonoBehaviour {
             {
                 //Refine the position of the object on the trajectory
                 GameObject myObjOnTrajectory = DraggedObj;
+                //Set the position of sound object on the path trajectory
                 myObjOnTrajectory.transform.position = myTestOnTrajectory.closestStartPos;
                 //Debug.Log(myTestOnTrajectory.closestStartPos.x + "  " + myTestOnTrajectory.closestStartPos.y + "  " + "  " + myTestOnTrajectory.closestStartPos.z);
-                Debug.Log(myTestOnTrajectory.currentPath);
+                //Debug.Log(myTestOnTrajectory.currentPath);
                 myTestOnTrajectory.releaseOnTrajectory = true;
             }
             /**************************************************************************************************************************************/
@@ -710,6 +774,9 @@ public class SceneManager : MonoBehaviour {
         //Recycle all trajectory
         foreach (Transform child in transform)
         {
+            //Reset the number of PathId
+            myPathCreatorScript.PathId = 0;
+
             if (child.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
             {
                 Destroy(child.gameObject);

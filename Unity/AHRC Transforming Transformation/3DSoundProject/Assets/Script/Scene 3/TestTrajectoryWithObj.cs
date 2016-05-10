@@ -17,7 +17,6 @@ public class TestTrajectoryWithObj : MonoBehaviour
     public bool releaseOnTrajectory = false;
 
     public GameObject currentPath;
-    public GameObject previousPath;
 
     public List<ListOfVertices> myList;
 
@@ -34,44 +33,14 @@ public class TestTrajectoryWithObj : MonoBehaviour
         //Init new list of Vertices for the new trajectory
         myList = new List<ListOfVertices>();
 
-        //Init dumbly previous Path
-        previousPath = null;
-
         //Init currentPath
         currentPath = null;
     }
 
+    private bool forward = true;
+
     void LateUpdate()
     {
-        /*if (previousPath == null)
-        {
-            //Reset current Point when previous path is reseted
-            currentPoint = 0;
-        }
-
-        if (releaseOnTrajectory && previousPath == currentPath)
-        {
-            //if hand is release - the object follow the trajectory
-            float dist = Vector3.Distance(myList[currentPoint].pos, transform.parent.position);
-            //Debug.Log("the current trajectory path for " + transform.parent.name + " is " + currentPath.name);
-
-            transform.parent.position = Vector3.MoveTowards(transform.parent.position, myList[currentPoint].pos, Time.deltaTime * speed);
-
-            if (dist <= reachDist)
-            {
-                currentPoint++;
-            }
-
-            if (currentPoint >= myList.Count)
-            {
-                currentPoint = myList.Count - 1;
-                releaseOnTrajectory = false;
-
-                //Reset dumbly previous Path
-                previousPath = null;
-            }
-        }*/
-
         if (releaseOnTrajectory)
         {
             //if hand is release - the object follow the trajectory
@@ -80,18 +49,29 @@ public class TestTrajectoryWithObj : MonoBehaviour
 
             if (dist <= reachDist)
             {
-                currentPoint++;
+                //Mechanism to manage the forward and backward following of the trajectory
+                if (forward)
+                    currentPoint++;
+                else
+                    currentPoint--;
             }
 
-            if (currentPoint >= myList.Count)
+            //Safety Mechanism
+            currentPoint = Mathf.Clamp(currentPoint, 0, myList.Count - 1);
+
+            if (currentPoint >= myList.Count - 1 || currentPoint <= 0)
             {
-                currentPoint = myList.Count - 1;
-                releaseOnTrajectory = false;
+                //Manage the Loop of the trajectory
+                forward = !forward;
             }
+
+            HighlightObjWithTrajectory = true;
+            //Highlight Object on trajectory - Overwrite the highlight on the Event functions
+            HighlightObjOnPath(1.0f);
         }
-        else
-            currentPoint = 0;
     }
+
+
 
     void OnTriggerEnter(Collider col)
     {
@@ -110,39 +90,22 @@ public class TestTrajectoryWithObj : MonoBehaviour
 
                 //Build a list of node for the trajectory
                 for (int i = 0; i < currentPath.GetComponents<SphereCollider>().Length; i++)
+                {
                     myList.Add(new ListOfVertices(i, currentPath.GetComponents<SphereCollider>()[i].center));
+
+                    //Get the current point of insertion onto the path - set the current point
+                    if (currentPath.GetComponents<SphereCollider>()[i].center == closestStartPos)
+                    {
+                        //Set the current point of insertion on the trajectory
+                        currentPoint = i;
+                        //Debug.Log("currentPoint is " + currentPoint);
+                    }
+                }
             }
+            
         }
     }
 
-    /*void OnTriggerEnter(Collider col)
-    {
-        if (col.gameObject.layer == LayerMask.NameToLayer("Trajectory"))
-        {
-            SphereCollider mySC = (SphereCollider)col;
-            Debug.Log(previousPath);
-            currentPath = mySC.gameObject;
-
-            //Only we do it once - not for all the collider that composed the path
-            if (currentPath != previousPath)
-            {
-                Debug.Log("the current trajectory path for " + transform.parent.name + " is " + currentPath.name);
-
-                //Clean Previous List if there is one
-                myList.Clear();
-
-                //Build a list of node for the trajectory
-                for (int i = 0; i < currentPath.GetComponents<SphereCollider>().Length; i++)
-                    myList.Add(new ListOfVertices(i, currentPath.GetComponents<SphereCollider>()[i].center));
-
-                closestStartPos = mySC.center;
-
-                previousPath = currentPath;
-            }
-            
-            HighlightObjWithTrajectory = true;
-        } 
-    }*/
 
     void OnTriggerStay(Collider col)
     {
@@ -153,14 +116,7 @@ public class TestTrajectoryWithObj : MonoBehaviour
             /********************************************************************************/
             //Highlight Dragged object when in contact with trajectory
             /********************************************************************************/
-            float hue;
-            float sat;
-            float val;
-            float highlight = 1.0f;
-
-            // Highlight the object in contact
-            mySceneManagerScript.RGBToHSV(transform.parent.gameObject.GetComponent<Renderer>().material.color, out hue, out sat, out val);
-            transform.parent.gameObject.GetComponent<Renderer>().material.color = mySceneManagerScript.HSVToRGB(hue, sat, highlight);
+            HighlightObjOnPath(1.0f);
             /********************************************************************************/
         }
     }
@@ -171,20 +127,26 @@ public class TestTrajectoryWithObj : MonoBehaviour
         {
             HighlightObjWithTrajectory = false;
 
-            //Update previous path
-            //previousPath = currentPath;
-
             /********************************************************************************/
             //Highlight Dragged object when in contact with trajectory
             /********************************************************************************/
-            float hue;
-            float sat;
-            float val;
-            float highlight = 0.5f;
-            //Un-Highlight the object when no contact  
-            mySceneManagerScript.RGBToHSV(transform.parent.gameObject.GetComponent<Renderer>().material.color, out hue, out sat, out val);
-            transform.parent.gameObject.GetComponent<Renderer>().material.color = mySceneManagerScript.HSVToRGB(hue, sat, highlight);
+            HighlightObjOnPath(0.5f);
             /********************************************************************************/
         }
+    }
+
+    void HighlightObjOnPath(float highlight)
+    {
+        /********************************************************************************/
+        //Highlight Dragged object when in contact with trajectory
+        /********************************************************************************/
+        float hue;
+        float sat;
+        float val;
+
+        // Highlight the object in contact
+        mySceneManagerScript.RGBToHSV(transform.parent.gameObject.GetComponent<Renderer>().material.color, out hue, out sat, out val);
+        transform.parent.gameObject.GetComponent<Renderer>().material.color = mySceneManagerScript.HSVToRGB(hue, sat, highlight);
+        /********************************************************************************/
     }
 }

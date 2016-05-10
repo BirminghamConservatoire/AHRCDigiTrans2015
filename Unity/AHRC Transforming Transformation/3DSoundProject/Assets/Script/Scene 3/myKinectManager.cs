@@ -48,6 +48,9 @@ public class myKinectManager : MonoBehaviour
     public bool previousFingerHandUpState = false;
     public bool createNewPath = false;
 
+    //if true - test mode for smooth curve trajectory
+    private bool trajectoryHD = false;
+
     void Start()
     {
 
@@ -66,202 +69,255 @@ public class myKinectManager : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        if (_Reader != null)
-        {
-            var frame = _Reader.AcquireLatestFrame();
-            if (frame != null)
-            {
-                if (_Data == null)
-                {
-                    _Data = new Body[_Sensor.BodyFrameSource.BodyCount];
-                }
 
-                frame.GetAndRefreshBodyData(_Data);
-
-                frame.Dispose();
-                frame = null;
-
-
-
-                int idx = -1;
-                for (int i = 0; i < _Sensor.BodyFrameSource.BodyCount; i++)
-                {
-                    if (_Data[i].IsTracked)
-                    {
-                        idx = i;
-                    }
-                }
-                if (idx > -1)
-                {
-
-                    if (_Data[idx].HandRightState != HandState.NotTracked)
-                    {
-                        //Manage Cursor state
-
-                        /********************************************************/
-                        //Hand Closed
-                        /********************************************************/
-                        if (_Data[idx].HandRightState == HandState.Closed)
-                        {
-                            RightHandIcon.GetComponent<RawImage>().texture = HandFist;
-                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFist;
-                            hasBeenSelectedbyHand = true;
-
-                            if (prevRightHandOpenState)
-                                selectionStateMachine = 1; //Selection
-                            else
-                                selectionStateMachine = 0;//No change
-
-                            prevRightHandOpenState = false;
-
-                            //Reset finger State
-                            previousFingerHandUpState = false;
-                            GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
-                        }
-
-                        /********************************************************/
-                        //Only one finger up
-                        /********************************************************/
-                        if ( _Data[idx].HandRightState == HandState.Lasso)
-                        {
-                            RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
-                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFinger;
-
-                            //Check previous state of finger - if it is the first time we have the finger up
-                            if (!previousFingerHandUpState)
-                            {
-                                //Set parameters to create new Path
-                                createNewPath = true;
-                                previousFingerHandUpState = true;
-
-                                GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = true;
-                            }
-                            else
-                                createNewPath = false;
-                        }
-
-                        /********************************************************/
-                        //Hand fully opened
-                        /********************************************************/
-                        if (_Data[idx].HandRightState == HandState.Open)
-                        {
-                            RightHandIcon.GetComponent<RawImage>().texture = HandFull;
-                            RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFull;
-                            hasBeenSelectedbyHand = false;
-                            
-                            if (!prevRightHandOpenState)
-                                selectionStateMachine = -1; //De-Selection
-                            else
-                                selectionStateMachine = 0;//No change
-
-                            prevRightHandOpenState = true;
-
-                            //Reset finger State
-                            previousFingerHandUpState = false;
-                            GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
-                        }
-
-                        //Debug.Log("State Machine " + selectionStateMachine);
-
-
-                        //Manage Right Hand Position when tracked
-                        currentRightHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandRight].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
-                                                        (float)((_Data[idx].Joints[JointType.HandRight].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
-                                                        (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
-                        deltaRightHandPos = currentRightHandPos - lastRightHandPos;
-                        lastRightHandPos = currentRightHandPos;
-
-
-                        /************************************************************************************************/
-                        //Manage the depth of the KINECT hand in the environment PS: currentRightHandPos is relative to the Kinect
-                        distance = currentRightHandPos.z;
-
-                        //Clamp Distance
-                        distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + mySceneManagerScript.SpherePattern.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - mySceneManagerScript.SpherePattern.transform.lossyScale.z / 2);
-                        /************************************************************************************************/
-                    }
-                    else
-                    {
-                        //Manage Right Hand Position when not tracked
-                        /*currentRightHandPos = new Vector3((float)(_Data[idx].Joints[JointType.HandRight].Position.X * 10.0f),
+	void Update()
+	{
+		if (_Reader != null)
+		{
+			var frame = _Reader.AcquireLatestFrame();
+			if (frame != null)
+			{
+				if (_Data == null)
+				{
+					_Data = new Body[_Sensor.BodyFrameSource.BodyCount];
+				}
+				
+				frame.GetAndRefreshBodyData(_Data);
+				
+				frame.Dispose();
+				frame = null;
+				
+				
+				
+				int idx = -1;
+				for (int i = 0; i < _Sensor.BodyFrameSource.BodyCount; i++)
+				{
+					if (_Data[i].IsTracked)
+					{
+						idx = i;
+					}
+				}
+				if (idx > -1)
+				{
+					
+					if (_Data[idx].HandRightState != HandState.NotTracked)
+					{
+						//Manage Cursor state
+						
+						/********************************************************/
+						//Hand Closed
+						/********************************************************/
+						if (_Data[idx].HandRightState == HandState.Closed)
+						{
+							RightHandIcon.GetComponent<RawImage>().texture = HandFist;
+							RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFist;
+							hasBeenSelectedbyHand = true;
+							
+							if (prevRightHandOpenState)
+								selectionStateMachine = 1; //Selection
+							else
+								selectionStateMachine = 0;//No change
+							
+							prevRightHandOpenState = false;
+							
+							//Reset finger State
+							previousFingerHandUpState = false;
+							if(!trajectoryHD)
+								GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
+							else
+								GameObject.Find("SceneObjects").GetComponent<TrajectoryPathCreator>().enabled = false;
+						}
+						
+						/********************************************************/
+						//Only one finger up
+						/********************************************************/
+						if ( _Data[idx].HandRightState == HandState.Lasso)
+						{
+							RightHandIcon.GetComponent<RawImage>().texture = HandFinger;
+							RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFinger;
+							
+							//Check previous state of finger - if it is the first time we have the finger up
+							if (!previousFingerHandUpState)
+							{
+								//Set parameters to create new Path
+								createNewPath = true;
+								previousFingerHandUpState = true;
+								
+								if (!trajectoryHD)
+									GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = true;
+								else
+									GameObject.Find("SceneObjects").GetComponent<TrajectoryPathCreator>().enabled = true;
+							}
+							else
+								createNewPath = false;
+						}
+						
+						/********************************************************/
+						//Hand fully opened
+						/********************************************************/
+						if (_Data[idx].HandRightState == HandState.Open)
+						{
+							RightHandIcon.GetComponent<RawImage>().texture = HandFull;
+							RightHandObj.GetComponent<Renderer>().material.mainTexture = HandFull;
+							hasBeenSelectedbyHand = false;
+							
+							if (!prevRightHandOpenState)
+								selectionStateMachine = -1; //De-Selection
+							else
+								selectionStateMachine = 0;//No change
+							
+							prevRightHandOpenState = true;
+							
+							//Reset finger State
+							previousFingerHandUpState = false;
+							
+							if (!trajectoryHD)
+								GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
+							else
+								GameObject.Find("SceneObjects").GetComponent<TrajectoryPathCreator>().enabled = false;
+						}
+						
+						//Debug.Log("State Machine " + selectionStateMachine);
+						
+						
+						//Manage Right Hand Position when tracked
+						currentRightHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandRight].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+						                                  (float)((_Data[idx].Joints[JointType.HandRight].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+						                                  (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+						deltaRightHandPos = currentRightHandPos - lastRightHandPos;
+						lastRightHandPos = currentRightHandPos;
+						
+						
+						/************************************************************************************************/
+						//Manage the depth of the KINECT hand in the environment PS: currentRightHandPos is relative to the Kinect
+						distance = currentRightHandPos.z;
+						
+						//Clamp Distance
+						distance = Mathf.Clamp(distance, GameObject.Find("Front").transform.position.z + mySceneManagerScript.SpherePattern.transform.lossyScale.z / 2, GameObject.Find("Back").transform.position.z - mySceneManagerScript.SpherePattern.transform.lossyScale.z / 2);
+						/************************************************************************************************/
+					}
+					else
+					{
+						//Manage Right Hand Position when not tracked
+						/*currentRightHandPos = new Vector3((float)(_Data[idx].Joints[JointType.HandRight].Position.X * 10.0f),
                                                         (float)(_Data[idx].Joints[JointType.HandRight].Position.Y * 10.0f),
                                                         -(float)(_Data[idx].Joints[JointType.HandRight].Position.Z * 10.0f));*/
-                        currentRightHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandRight].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
-                                                        (float)((_Data[idx].Joints[JointType.HandRight].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
-                                                        (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
-                        deltaRightHandPos = new Vector3(0.0f,0.0f,0.0f);
-                        lastRightHandPos = currentRightHandPos;
+						currentRightHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandRight].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+						                                  (float)((_Data[idx].Joints[JointType.HandRight].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+						                                  (float)((-(_Data[idx].Joints[JointType.HandRight].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+						deltaRightHandPos = new Vector3(0.0f,0.0f,0.0f);
+						lastRightHandPos = currentRightHandPos;
+						
+						//Reset finger State
+						previousFingerHandUpState = false;
+						
+						if (!trajectoryHD)
+							GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
+						else
+							GameObject.Find("SceneObjects").GetComponent<TrajectoryPathCreator>().enabled = false;
+					}
+					
+					
+					if (_Data[idx].HandLeftState != HandState.NotTracked)
+					{
+						//Manage Left Hand Position when tracked
+						
+						//Manage Volume Control
+						if (_Data[idx].HandLeftState == HandState.Closed)
+						{
+							//Debug.Log("Closed");
+							leftHandVolumeCtrl = false;
+						}
+						if (_Data[idx].HandLeftState == HandState.Open)
+						{
+							//Debug.Log("Open");
+							leftHandVolumeCtrl = false;
+						}
+						if (_Data[idx].HandLeftState == HandState.Lasso)
+						{
+							//Debug.Log("Lasso");
+							leftHandVolumeCtrl = true;
+						}
+						
+						currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+						                                 (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+						                                 (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+						deltaLeftHandPos = currentLeftHandPos - lastLeftHandPos;
+						lastLeftHandPos = currentLeftHandPos;
+						
+					}
+					
+					else 
+					{
+						//Manage Left Hand Position when not tracked
+						currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
+						                                 (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
+						                                 (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
+						deltaLeftHandPos = new Vector3(0.0f, 0.0f, 0.0f);
+						lastLeftHandPos = currentLeftHandPos;
+					}
+				}
+			}
+		}
+		
+		//Project Kinect hand to the screen as Icon
+		ProjectControlObjectOntoScreen(RightHandIcon, RightHandObj, currentRightHandPos);
+		
+		//Control the volume of Dragged Object
+		if (mySceneManagerScript.DraggedObj)
+		{
+			if (leftHandVolumeCtrl)
+			{
+				//Control Volume
+				mySceneManagerScript.ControlObjVolume(mySceneManagerScript.DraggedObj, deltaLeftHandPos.y / 5.0f);
+				
+				//Manage Interface to control volume
+				mySceneManagerScript.ManageVolumeInterface(true, mySceneManagerScript.DraggedObj);
 
-                        //Reset finger State
-                        previousFingerHandUpState = false;
-                        GameObject.Find("SceneObjects").GetComponent<PathCreator>().enabled = false;
-                    }
+				if (mySceneManagerScript.isXOSC)
+				{
+					//Set Value of x-OSC slider 
+					mySceneManagerScript.leftHandVibrationEvent._sliderValue = mySceneManagerScript.volumeInterface.transform.GetChild(0).GetComponent<Slider>().value * 100.0f;
+					//Activate/Disactivate gradual Vibration on left hand
+					mySceneManagerScript.leftHandVibrationEvent.SendOSCMessage();
+				}
+							
+			}
+			else
+			{
+				//Hide Interface to control volume
+				mySceneManagerScript.ManageVolumeInterface(false, mySceneManagerScript.DraggedObj);
 
+				if (mySceneManagerScript.isXOSC)
+				{
+					if (mySceneManagerScript.leftHandVibrationEvent._sliderValue != 0.0f)
+					{
+						//Reset Value of x-OSC slider
+						mySceneManagerScript.leftHandVibrationEvent._sliderValue = 0.0f;
+						//Activate/Disactivate gradual Vibration on left hand
+						mySceneManagerScript.leftHandVibrationEvent.SendOSCMessage();
+					}
+				}
+			}
+			
+		}
+		else
+		{
+			//Hide Interface to control volume
+			mySceneManagerScript.ManageVolumeInterface(false, null);
 
-                    if (_Data[idx].HandLeftState != HandState.NotTracked)
-                    {
-                        //Manage Left Hand Position when tracked
-
-                        //Manage Volume Control
-                        if (_Data[idx].HandLeftState == HandState.Closed)
-                        {
-                            //Debug.Log("Closed");
-                            leftHandVolumeCtrl = false;
-                        }
-                        if (_Data[idx].HandLeftState == HandState.Open)
-                        {
-                            //Debug.Log("Open");
-                            leftHandVolumeCtrl = false;
-                        }
-                        if (_Data[idx].HandLeftState == HandState.Lasso)
-                        {
-                            //Debug.Log("Lasso");
-                            leftHandVolumeCtrl = true;
-                        }
-
-                        currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
-                                                        (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
-                                                        (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
-                        deltaLeftHandPos = currentLeftHandPos - lastLeftHandPos;
-                        lastLeftHandPos = currentLeftHandPos;
-
-                    }
-
-                    else 
-                    {
-                        //Manage Left Hand Position when not tracked
-                        currentLeftHandPos = new Vector3((float)((_Data[idx].Joints[JointType.HandLeft].Position.X + KinectOriginOffset.x) * KinectWorkSpaceScale.x),
-                                                        (float)((_Data[idx].Joints[JointType.HandLeft].Position.Y + KinectOriginOffset.y) * KinectWorkSpaceScale.y),
-                                                        (float)((-(_Data[idx].Joints[JointType.HandLeft].Position.Z) + KinectOriginOffset.z) * KinectWorkSpaceScale.z));//We offset the Z axis otherwise the origin is the kinect itself
-                        deltaLeftHandPos = new Vector3(0.0f, 0.0f, 0.0f);
-                        lastLeftHandPos = currentLeftHandPos;
-                    }
-                }
-            }
-        }
-
-        //Project Kinect hand to the screen as Icon
-        ProjectControlObjectOntoScreen(RightHandIcon, RightHandObj, currentRightHandPos);
-
-        //Control the volume of Dragged Object
-        if (mySceneManagerScript.DraggedObj)
-        {
-            if (leftHandVolumeCtrl)
-            {
-                //Control Volume
-                mySceneManagerScript.ControlObjVolume(mySceneManagerScript.DraggedObj, deltaLeftHandPos.y / 5.0f);
-
-                //Manage Interface to control volume
-                mySceneManagerScript.ManageVolumeInterface(true, mySceneManagerScript.DraggedObj);
-            }
-            else //Hide Interface to control volume
-                mySceneManagerScript.ManageVolumeInterface(false, mySceneManagerScript.DraggedObj);
-        }
-        else //Hide Interface to control volume
-            mySceneManagerScript.ManageVolumeInterface(false, null);   
-    }
+			if (mySceneManagerScript.isXOSC)
+			{
+				if (mySceneManagerScript.leftHandVibrationEvent._sliderValue != 0.0f)
+				{
+					//Reset Value of x-OSC slider
+					mySceneManagerScript.leftHandVibrationEvent._sliderValue = 0.0f;
+					//Activate/Disactivate gradual Vibration on left hand
+					mySceneManagerScript.leftHandVibrationEvent.SendOSCMessage();
+				} 
+			}
+		}
+	}
 
 
     public void ProjectControlObjectOntoScreen(GameObject projectedIcon, GameObject obj, Vector3 KinectHandPos)
